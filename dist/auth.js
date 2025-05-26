@@ -50,6 +50,7 @@ function verifyToken(token) {
  *
  * @param token - The JWT token to decode.
  * @returns the payload of the JWT token as a string.
+ * @throws Will throw an error if the token cannot be decoded.
  */
 function decodeToken(token) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -58,6 +59,14 @@ function decodeToken(token) {
         return decodedData.payload;
     });
 }
+/**
+ * Tries to sign the user in with a username and password, and returns the access token and refresh token.
+ *
+ * @param email email of the user
+ * @param password password of the user
+ * @returns access token and refresh token as a tuple
+ * @throws Will throw an error if the login fails
+ */
 function signInAndGetToken(email, password) {
     return __awaiter(this, void 0, void 0, function* () {
         const { data, error } = yield supabase.auth.signInWithPassword({
@@ -78,7 +87,10 @@ function signInAndGetToken(email, password) {
 /**
  * Signs out the user from both the client and server side.
  *
- * @param session
+ * @param token JWT token of the user to sign out
+ * @param scope Optional scope to specify which sessions to sign out ('global', 'local', or 'others')
+ * @throws Will throw an error if the sign out fails (already signed out, invalid token, etc.) Will throw
+ * AuthSessionMissingError if the token is invalid or the session has expired.
  */
 function signOut(token, scope) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -90,9 +102,9 @@ function signOut(token, scope) {
             }
             else {
                 console.error('Server-side sign out error:', revokeError.message);
-                throw revokeError;
             }
             ;
+            throw revokeError;
         }
         //if (error) {
         //console.error('Sign out error:', error.message)
@@ -102,9 +114,12 @@ function signOut(token, scope) {
     });
 }
 /**
- *
+ * Refreshes the access token using the provided refresh token.
+ * Note: This will fail if the refresh token is expired or invalid.
+ * @param refreshToken - The refresh token to use for signing in.
+ * @return A tuple containing the new access token and refresh token.
  */
-function useRefreshToken(refreshToken) {
+function useSupaBaseRefreshToken(refreshToken) {
     return __awaiter(this, void 0, void 0, function* () {
         const { data, error } = yield supabase.auth.refreshSession({ refresh_token: refreshToken });
         if (error) {
@@ -121,18 +136,32 @@ function useRefreshToken(refreshToken) {
         return [accessToken, newRefreshToken];
     });
 }
+function oathSignIn() {
+    return __awaiter(this, void 0, void 0, function* () {
+        // This function is not implemented yet, but it will handle OAuth sign-in
+        // using the Supabase client.
+        supabase.auth.signInWithOAuth({
+            provider: 'google', // or any other OAuth provider supported by Supabase
+            options: {
+                redirectTo: 'http://localhost:3000/auth/callback', // replace with your redirect URL after they are confirmed
+                scopes: 'email profile',
+            }
+        });
+        throw new Error('OAuth sign-in is not implemented yet.');
+    });
+}
 //--------------------------------------------Main Function--------------------------------------------------//
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
-        let [token, refreshToken] = yield signInAndGetToken('muktharamesh21@gmail.com', 'kiddo*');
+        let [token, refreshToken] = yield signInAndGetToken('muktharamesh21@gmail.com', 'AthenaWarrior0212*');
         try {
-            [token, refreshToken] = yield useRefreshToken(refreshToken);
+            [token, refreshToken] = yield useSupaBaseRefreshToken(refreshToken);
         }
         catch (error) {
             console.error('Error refreshing token:', error);
             //throw error; // Re-throw the error or handle it appropriately
         }
-        console.log(yield jsonwebtoken_1.default.decode(token, { complete: true }));
+        console.log(jsonwebtoken_1.default.decode(token, { complete: true }));
         console.log(yield verifyToken(token));
         try {
             yield signOut(token, 'global');

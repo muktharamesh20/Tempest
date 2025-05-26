@@ -3,7 +3,6 @@ import { Database } from './databasetypes'
 import assert from 'assert'
 import jwt from 'jsonwebtoken'
 import dotenv from 'dotenv';
-import { decode } from 'punycode';
 
 //allows us to use process.env to get environment variables
 dotenv.config();
@@ -33,6 +32,7 @@ const supabase = createClient<Database>(
 async function verifyToken(token: string): Promise<JwtPayload> {
     const decodedData = jwt.verify(token, process.env.JWT_SECRET ?? assert.fail('NEXT_PUBLIC_SUPABASE_JWT_SECRET is not defined'), { algorithms: ['HS256'] }) as JwtPayload;
 
+    assert(decodedData.iss === process.env.NEXT_PUBLIC_SUPABASE_URL, 'Token issuer does not match Supabase URL');
     //console.log('current tiem:', Math.floor(Date.now() / 1000));
     //assert(decodedData.exp > Math.floor(Date.now() / 1000), 'Token has expired');
     return decodedData;
@@ -137,12 +137,19 @@ async function useSupaBaseRefreshToken(refreshToken: string): Promise<[string, s
 async function oathSignIn(): Promise<[string, string]> {
     // This function is not implemented yet, but it will handle OAuth sign-in
     // using the Supabase client.
+    supabase.auth.signInWithOAuth({
+        provider: 'google', // or any other OAuth provider supported by Supabase
+        options: {
+            redirectTo: 'http://localhost:3000/auth/callback', // replace with your redirect URL after they are confirmed
+            scopes: 'email profile',
+        }
+    })
     throw new Error('OAuth sign-in is not implemented yet.');
 }
 
 //--------------------------------------------Main Function--------------------------------------------------//
 async function main(): Promise<void> {
-    let [token, refreshToken] = await signInAndGetToken('muktharamesh21@gmail.com', 'kiddo*')
+    let [token, refreshToken] = await signInAndGetToken('muktharamesh21@gmail.com', 'AthenaWarrior0212*')
     try {
         [token, refreshToken] = await useSupaBaseRefreshToken(refreshToken);
     } catch (error) {
