@@ -1,4 +1,4 @@
-import { createClient, JwtPayload } from '@supabase/supabase-js'
+import { AuthSessionMissingError, createClient, JwtPayload } from '@supabase/supabase-js'
 import { Database } from './databasetypes'
 import assert from 'assert'
 import jwt from 'jsonwebtoken'
@@ -28,15 +28,16 @@ const supabase = createClient<Database>(
  * @returns the decoded user information from the JWT token.
  * @throws Will throw an error if the JWT secret is not defined or if the token is invalid.
  */
-async function verifyToken(token: string): Promise<string> {
+async function verifyToken(token: string): Promise<JwtPayload> {
     const decodedData = jwt.verify(token, process.env.JWT_SECRET ?? assert.fail('NEXT_PUBLIC_SUPABASE_JWT_SECRET is not defined'), { algorithms: ['HS256'] }) as JwtPayload;
 
-    assert(decodedData.exp > Math.floor(Date.now() / 1000), 'Token has expired');
-    return decodeToken(token);
+    //console.log('current tiem:', Math.floor(Date.now() / 1000));
+    //assert(decodedData.exp > Math.floor(Date.now() / 1000), 'Token has expired');
+    return decodedData;
 }
 
 /**
- * Decodes a JWT token without verifying its signature or that its expired.
+ * Decodes a JWT token without verifying its signature or that its expired (in string format).
  * 
  * @param token - The JWT token to decode.
  * @returns the payload of the JWT token as a string.
@@ -47,7 +48,7 @@ async function decodeToken(token: string): Promise<string> {
     return decodedData.payload as string;
 }
 
-async function signInAndGetToken(email: string, password: string): Promise<string> {
+async function signInAndGetToken(email: string, password: string): Promise<[string, string]> {
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
@@ -55,7 +56,7 @@ async function signInAndGetToken(email: string, password: string): Promise<strin
 
   if (error) {
     console.error('Login error:', error.message)
-    return "error"
+    throw error
   }
 
   const accessToken = data.session.access_token
@@ -64,14 +65,74 @@ async function signInAndGetToken(email: string, password: string): Promise<strin
   console.log('✅ Access Token:', accessToken)
   console.log('🔁 Refresh Token:', refreshToken)
 
-  return accessToken
+  return [accessToken, refreshToken]
+}
+
+/**
+ * Signs out the user from both the client and server side.
+ * 
+ * @param session 
+ */
+async function signOut(token: string, scope?: 'global' | 'local' | 'others'): Promise<void> {
+  //const { error } = await supabase.auth.signOut();
+  const { error: revokeError } = await supabase.auth.admin.signOut(token, scope);
+
+  if (revokeError) {
+    if (revokeError instanceof AuthSessionMissingError) {
+      console.error('Unauthorized: Invalid token or session expired');
+    } else {
+      console.error('Server-side sign out error:', revokeError.message);
+      throw revokeError;
+    };
+  }
+  //if (error) {
+    //console.error('Sign out error:', error.message)
+    //throw error
+  //}
+
+  console.log('✅ Successfully signed out')
+}
+
+/**
+ * 
+ */
+async function useRefreshToken(refreshToken: string): Promise<[string, string]> {
+  const { data, error } = await supabase.auth.refreshSession({refresh_token: refreshToken});
+
+  if (error) {
+    console.error('Refresh token error:', error.message);
+    throw error;
+  }
+
+  if (!data.session) {
+    throw new Error('No session data returned from refreshSession');
+  }
+
+  const accessToken = data.session.access_token;
+  const newRefreshToken = data.session.refresh_token;
+
+  console.log('✅ New Access Token:', accessToken);
+  console.log('🔁 New Refresh Token:', newRefreshToken);
+
+  return [accessToken, newRefreshToken];
 }
 
 async function main(): Promise<void> {
-    //const token = await signInAndGetToken('muktharamesh21@gmail.com', 'AthenaWarrior0212*')
-    const token = 'eyJhbGciOiJIUzI1NiIsImtpZCI6IncxQ0o4N1ZWbHdFWDE5Nk8iLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3ZqZGpybXVob2p3cHJ1Z3BwdWZkLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJhNWE5ODk4Yi05ZmNjLTQ5NmQtODg0ZS03YmQ1YmZlYzM5YzQiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzQ4MjQxODM0LCJpYXQiOjE3NDgyMzgyMzQsImVtYWlsIjoibXVrdGhhcmFtZXNoMjFAZ21haWwuY29tIiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnsicHJvdmlkZXIiOiJlbWFpbCIsInByb3ZpZGVycyI6WyJlbWFpbCJdfSwidXNlcl9tZXRhZGF0YSI6eyJlbWFpbF92ZXJpZmllZCI6dHJ1ZX0sInJvbGUiOiJhdXRoZW50aWNhdGVkIiwiYWFsIjoiYWFsMSIsImFtciI6W3sibWV0aG9kIjoicGFzc3dvcmQiLCJ0aW1lc3RhbXAiOjE3NDgyMzgyMzR9XSwic2Vzc2lvbl9pZCI6IjkwZDZhMjVlLTZmMzUtNDAzNy05OWZlLTkzMTg3MzNmNGI4MCIsImlzX2Fub255bW91cyI6ZmFsc2V9.KBcxya02Nohf8sIMbpRoaaZ8z9IJTrzJ5ovFnz8-c4g'
+    let [token, refreshToken] = await signInAndGetToken('muktharamesh21@gmail.com', 'kiddo*')
+    try {
+        [token, refreshToken] = await useRefreshToken(refreshToken);
+    } catch (error) {
+        console.error('Error refreshing token:', error);
+        //throw error; // Re-throw the error or handle it appropriately
+    }
+    console.log(await jwt.decode(token, { complete: true }))
     console.log(await verifyToken(token));
-    console.log(jwt.decode(token, { complete: true }))
+
+    try {
+        await signOut(token, 'global');
+    } catch (error) {
+        console.error('Error signing out:', error);
+    }
 }
 
 main()

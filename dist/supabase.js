@@ -39,12 +39,13 @@ function verifyToken(token) {
     return __awaiter(this, void 0, void 0, function* () {
         var _a;
         const decodedData = jsonwebtoken_1.default.verify(token, (_a = process.env.JWT_SECRET) !== null && _a !== void 0 ? _a : assert_1.default.fail('NEXT_PUBLIC_SUPABASE_JWT_SECRET is not defined'), { algorithms: ['HS256'] });
-        (0, assert_1.default)(decodedData.exp > Math.floor(Date.now() / 1000), 'Token has expired');
-        return decodeToken(token);
+        //console.log('current tiem:', Math.floor(Date.now() / 1000));
+        //assert(decodedData.exp > Math.floor(Date.now() / 1000), 'Token has expired');
+        return decodedData;
     });
 }
 /**
- * Decodes a JWT token without verifying its signature or that its expired.
+ * Decodes a JWT token without verifying its signature or that its expired (in string format).
  *
  * @param token - The JWT token to decode.
  * @returns the payload of the JWT token as a string.
@@ -64,21 +65,79 @@ function signInAndGetToken(email, password) {
         });
         if (error) {
             console.error('Login error:', error.message);
-            return "error";
+            throw error;
         }
         const accessToken = data.session.access_token;
         const refreshToken = data.session.refresh_token;
         console.log('✅ Access Token:', accessToken);
         console.log('🔁 Refresh Token:', refreshToken);
-        return accessToken;
+        return [accessToken, refreshToken];
+    });
+}
+/**
+ * Signs out the user from both the client and server side.
+ *
+ * @param session
+ */
+function signOut(token, scope) {
+    return __awaiter(this, void 0, void 0, function* () {
+        //const { error } = await supabase.auth.signOut();
+        const { error: revokeError } = yield supabase.auth.admin.signOut(token, scope);
+        if (revokeError) {
+            if (revokeError instanceof supabase_js_1.AuthSessionMissingError) {
+                console.error('Unauthorized: Invalid token or session expired');
+            }
+            else {
+                console.error('Server-side sign out error:', revokeError.message);
+                throw revokeError;
+            }
+            ;
+        }
+        //if (error) {
+        //console.error('Sign out error:', error.message)
+        //throw error
+        //}
+        console.log('✅ Successfully signed out');
+    });
+}
+/**
+ *
+ */
+function useRefreshToken(refreshToken) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const { data, error } = yield supabase.auth.refreshSession({ refresh_token: refreshToken });
+        if (error) {
+            console.error('Refresh token error:', error.message);
+            throw error;
+        }
+        if (!data.session) {
+            throw new Error('No session data returned from refreshSession');
+        }
+        const accessToken = data.session.access_token;
+        const newRefreshToken = data.session.refresh_token;
+        console.log('✅ New Access Token:', accessToken);
+        console.log('🔁 New Refresh Token:', newRefreshToken);
+        return [accessToken, newRefreshToken];
     });
 }
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
-        //const token = await signInAndGetToken('muktharamesh21@gmail.com', 'AthenaWarrior0212*')
-        const token = 'eyJhbGciOiJIUzI1NiIsImtpZCI6IncxQ0o4N1ZWbHdFWDE5Nk8iLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3ZqZGpybXVob2p3cHJ1Z3BwdWZkLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJhNWE5ODk4Yi05ZmNjLTQ5NmQtODg0ZS03YmQ1YmZlYzM5YzQiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzQ4MjQxODM0LCJpYXQiOjE3NDgyMzgyMzQsImVtYWlsIjoibXVrdGhhcmFtZXNoMjFAZ21haWwuY29tIiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnsicHJvdmlkZXIiOiJlbWFpbCIsInByb3ZpZGVycyI6WyJlbWFpbCJdfSwidXNlcl9tZXRhZGF0YSI6eyJlbWFpbF92ZXJpZmllZCI6dHJ1ZX0sInJvbGUiOiJhdXRoZW50aWNhdGVkIiwiYWFsIjoiYWFsMSIsImFtciI6W3sibWV0aG9kIjoicGFzc3dvcmQiLCJ0aW1lc3RhbXAiOjE3NDgyMzgyMzR9XSwic2Vzc2lvbl9pZCI6IjkwZDZhMjVlLTZmMzUtNDAzNy05OWZlLTkzMTg3MzNmNGI4MCIsImlzX2Fub255bW91cyI6ZmFsc2V9.KBcxya02Nohf8sIMbpRoaaZ8z9IJTrzJ5ovFnz8-c4g';
+        let [token, refreshToken] = yield signInAndGetToken('muktharamesh21@gmail.com', 'kiddo*');
+        try {
+            [token, refreshToken] = yield useRefreshToken(refreshToken);
+        }
+        catch (error) {
+            console.error('Error refreshing token:', error);
+            //throw error; // Re-throw the error or handle it appropriately
+        }
+        console.log(yield jsonwebtoken_1.default.decode(token, { complete: true }));
         console.log(yield verifyToken(token));
-        console.log(jsonwebtoken_1.default.decode(token, { complete: true }));
+        try {
+            yield signOut(token, 'global');
+        }
+        catch (error) {
+            console.error('Error signing out:', error);
+        }
     });
 }
 main();
