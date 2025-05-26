@@ -77,8 +77,8 @@ class WebServer {
          * 
          * Response is the board state from playerId's perspective, as described in the ps4 handout.
          */
-        this.app.get('/likePost/:postID:userID', async(request, response) => {
-            const { postID } = request.params;
+        this.app.get('/likePost/:postID/:userID', async(request, response) => {
+            const { postID, userID } = request.params;
             assert(postID);
             /** 
             const boardState = await look(this.board, playerId);
@@ -95,8 +95,62 @@ class WebServer {
          * 
          * Response is the board state from playerId's perspective, as described in the ps4 handout.
          */
-        this.app.get('/likeStory/:postID', async(request, response) => {
-            const { postID } = request.params;
+        this.app.get('/likeStory/:storyID/:userID', async(request, response) => {
+            const { storyID, userID } = request.params;
+            assert(storyID);
+            /** 
+            const boardState = await look(this.board, playerId);
+            response
+            .status(StatusCodes.OK) // 200
+            .type('text')
+            .send(boardState);
+            */
+        });
+
+        /*
+         * GET /look/<playerId>
+         * playerId must be a nonempty string of alphanumeric or underscore characters
+         * 
+         * Response is the board state from playerId's perspective, as described in the ps4 handout.
+         */
+        this.app.get('/requestFollow/:requesterID/:userID', async(request, response) => {
+            const { requesterID, userID } = request.params;
+            assert(requesterID);
+            /** 
+            const boardState = await look(this.board, playerId);
+            response
+            .status(StatusCodes.OK) // 200
+            .type('text')
+            .send(boardState);
+            */
+        });
+
+        /*
+         * GET /look/<playerId>
+         * playerId must be a nonempty string of alphanumeric or underscore characters
+         * 
+         * Response is the board state from playerId's perspective, as described in the ps4 handout.
+         */
+        this.app.get('/acceptFollow/:accepterID/:userID', async(request, response) => {
+            const { accepterID, userID } = request.params;
+            assert(postID);
+            /** 
+            const boardState = await look(this.board, playerId);
+            response
+            .status(StatusCodes.OK) // 200
+            .type('text')
+            .send(boardState);
+            */
+        });
+
+        /*
+         * GET /look/<playerId>
+         * playerId must be a nonempty string of alphanumeric or underscore characters
+         * 
+         * Response is the board state from playerId's perspective, as described in the ps4 handout.
+         */
+        this.app.get('/likePost/:postID/:userID', async(request, response) => {
+            const { postID, userID } = request.params;
             assert(postID);
             /** 
             const boardState = await look(this.board, playerId);
