@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.49.8",
     "cookie-parser": "^1.4.7",
     "dotenv": "^16.5.0",
@@ -17,6 +18,7 @@
     "@types/node": "^22.15.21"
   },
   "scripts": {
-    "warmup": "tsc && node --require source-map-support/register dist/supabase.js"
+    "auth": "tsc && node --require source-map-support/register dist/auth.js",
+    "database": "tsc && node --require source-map-support/register dist/supabase.js"
   }
 }

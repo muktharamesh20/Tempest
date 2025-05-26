@@ -28,6 +28,7 @@ const supabase = (0, supabase_js_1.createClient)((_a = process.env.NEXT_PUBLIC_S
     }
 });
 //helper functions to interact with the database
+//--------------------------------------------Authentication Functions--------------------------------------------------//
 /**
  * Verifies a JWT token and returns the decoded user information.
  *
@@ -120,6 +121,7 @@ function useRefreshToken(refreshToken) {
         return [accessToken, newRefreshToken];
     });
 }
+//--------------------------------------------Main Function--------------------------------------------------//
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
         let [token, refreshToken] = yield signInAndGetToken('muktharamesh21@gmail.com', 'kiddo*');

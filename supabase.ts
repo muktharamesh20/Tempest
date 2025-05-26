@@ -21,6 +21,8 @@ const supabase = createClient<Database>(
 
 //helper functions to interact with the database
 
+
+//--------------------------------------------Authentication Functions--------------------------------------------------//
 /**
  * Verifies a JWT token and returns the decoded user information.
  * 
@@ -117,22 +119,8 @@ async function useRefreshToken(refreshToken: string): Promise<[string, string]> 
   return [accessToken, newRefreshToken];
 }
 
+//--------------------------------------------Main Function--------------------------------------------------//
 async function main(): Promise<void> {
-    let [token, refreshToken] = await signInAndGetToken('muktharamesh21@gmail.com', 'kiddo*')
-    try {
-        [token, refreshToken] = await useRefreshToken(refreshToken);
-    } catch (error) {
-        console.error('Error refreshing token:', error);
-        //throw error; // Re-throw the error or handle it appropriately
-    }
-    console.log(await jwt.decode(token, { complete: true }))
-    console.log(await verifyToken(token));
-
-    try {
-        await signOut(token, 'global');
-    } catch (error) {
-        console.error('Error signing out:', error);
-    }
 }
 
 main()
