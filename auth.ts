@@ -32,7 +32,7 @@ const supabase = createClient<Database>(
 async function verifyToken(token: string): Promise<JwtPayload> {
     const decodedData = jwt.verify(token, process.env.JWT_SECRET ?? assert.fail('NEXT_PUBLIC_SUPABASE_JWT_SECRET is not defined'), { algorithms: ['HS256'] }) as JwtPayload;
 
-    assert(decodedData.iss === process.env.NEXT_PUBLIC_SUPABASE_URL, 'Token issuer does not match Supabase URL');
+    assert(decodedData.iss === 'https://vjdjrmuhojwprugppufd.supabase.co/auth/v1', 'Token issuer does not match Supabase URL');
     //console.log('current tiem:', Math.floor(Date.now() / 1000));
     //assert(decodedData.exp > Math.floor(Date.now() / 1000), 'Token has expired');
     return decodedData;

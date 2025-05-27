@@ -40,6 +40,7 @@ function verifyToken(token) {
     return __awaiter(this, void 0, void 0, function* () {
         var _a;
         const decodedData = jsonwebtoken_1.default.verify(token, (_a = process.env.JWT_SECRET) !== null && _a !== void 0 ? _a : assert_1.default.fail('NEXT_PUBLIC_SUPABASE_JWT_SECRET is not defined'), { algorithms: ['HS256'] });
+        (0, assert_1.default)(decodedData.iss === 'https://vjdjrmuhojwprugppufd.supabase.co/auth/v1', 'Token issuer does not match Supabase URL');
         //console.log('current tiem:', Math.floor(Date.now() / 1000));
         //assert(decodedData.exp > Math.floor(Date.now() / 1000), 'Token has expired');
         return decodedData;

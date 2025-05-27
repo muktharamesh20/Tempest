@@ -27,6 +27,15 @@ const supabase = (0, supabase_js_1.createClient)((_a = process.env.NEXT_PUBLIC_S
     }
 });
 //helper functions to interact with the database
+function addRecord(table, record) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const { data, error } = yield supabase.from(table).insert(record);
+        if (error) {
+            throw new Error(`Error adding record to ${table}: ${error.message}`);
+        }
+        console.log(`Record added to ${table}:`, data);
+    });
+}
 //--------------------------------------------Main Function--------------------------------------------------//
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
