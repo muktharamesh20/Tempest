@@ -22,6 +22,32 @@ const supabase = createClient<Database>(
 
 
 //--------------------------------------------Authentication Functions--------------------------------------------------//
+async function createUser(email: string, password: string): Promise<void> {
+    const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+    });
+
+    if (error) {
+        console.error('Error creating user:', error.message);
+        throw error;
+    }
+
+    console.log('User created successfully:', data);
+}
+
+//TODO: DOES NOT WORK YET
+async function deleteUser(email: string): Promise<void> {
+    const { data, error } = await supabase.auth.admin.deleteUser('5e3ae116-297b-41cd-93a8-a1d55af10f1e');
+
+    if (error) {
+        console.error('Error deleting user:', error.message);
+        throw error;
+    }
+
+    console.log('User deleted successfully:', data);
+}
+
 /**
  * Verifies a JWT token and returns the decoded user information.
  * 
@@ -149,7 +175,8 @@ async function oathSignIn(): Promise<[string, string]> {
 
 //--------------------------------------------Main Function--------------------------------------------------//
 async function main(): Promise<void> {
-    let [token, refreshToken] = await signInAndGetToken('muktharamesh21@gmail.com', 'AthenaWarrior0212*')
+    await createUser("muktharamesh20@gmail.com", "hehehehehe")
+    let [token, refreshToken] = await signInAndGetToken('muktharamesh20@gmail.com', 'hehehehehe')
     try {
         [token, refreshToken] = await useSupaBaseRefreshToken(refreshToken);
     } catch (error) {

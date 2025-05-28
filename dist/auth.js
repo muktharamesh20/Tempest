@@ -29,6 +29,30 @@ const supabase = (0, supabase_js_1.createClient)((_a = process.env.NEXT_PUBLIC_S
 });
 //helper functions to interact with the database
 //--------------------------------------------Authentication Functions--------------------------------------------------//
+function createUser(email, password) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const { data, error } = yield supabase.auth.signUp({
+            email,
+            password,
+        });
+        if (error) {
+            console.error('Error creating user:', error.message);
+            throw error;
+        }
+        console.log('User created successfully:', data);
+    });
+}
+//TODO: DOES NOT WORK YET
+function deleteUser(email) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const { data, error } = yield supabase.auth.admin.deleteUser('5e3ae116-297b-41cd-93a8-a1d55af10f1e');
+        if (error) {
+            console.error('Error deleting user:', error.message);
+            throw error;
+        }
+        console.log('User deleted successfully:', data);
+    });
+}
 /**
  * Verifies a JWT token and returns the decoded user information.
  *
@@ -154,7 +178,8 @@ function oathSignIn() {
 //--------------------------------------------Main Function--------------------------------------------------//
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
-        let [token, refreshToken] = yield signInAndGetToken('muktharamesh21@gmail.com', 'AthenaWarrior0212*');
+        yield createUser("muktharamesh20@gmail.com", "hehehehehe");
+        let [token, refreshToken] = yield signInAndGetToken('muktharamesh20@gmail.com', 'hehehehehe');
         try {
             [token, refreshToken] = yield useSupaBaseRefreshToken(refreshToken);
         }
