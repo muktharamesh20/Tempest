@@ -19,6 +19,7 @@
   },
   "scripts": {
     "auth": "tsc && node --require source-map-support/register dist/auth.js",
-    "database": "tsc && node --require source-map-support/register dist/supabase.js"
+    "database": "tsc && node --require source-map-support/register dist/supabase.js",
+    "test": "tsc && node --require source-map-support/register dist/test.js"
   }
 }

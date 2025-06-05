@@ -11,8 +11,15 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
-var _a, _b;
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.getSupabaseClient = getSupabaseClient;
+exports.createUser = createUser;
+exports.deleteUser = deleteUser;
+exports.verifyToken = verifyToken;
+exports.decodeToken = decodeToken;
+exports.signInAndGetToken = signInAndGetToken;
+exports.signOut = signOut;
+exports.useSupaBaseRefreshToken = useSupaBaseRefreshToken;
 const supabase_js_1 = require("@supabase/supabase-js");
 const assert_1 = __importDefault(require("assert"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
@@ -20,18 +27,25 @@ const dotenv_1 = __importDefault(require("dotenv"));
 //allows us to use process.env to get environment variables
 dotenv_1.default.config();
 // Create a single supabase client for interacting with your database
-const supabase = (0, supabase_js_1.createClient)((_a = process.env.NEXT_PUBLIC_SUPABASE_URL) !== null && _a !== void 0 ? _a : assert_1.default.fail('NEXT_PUBLIC_SUPABASE_URL is not defined'), (_b = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) !== null && _b !== void 0 ? _b : assert_1.default.fail('NEXT_PUBLIC_SUPABASE_ANON_KEY is not defined'), {
-    auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-        detectSessionInUrl: false
-    }
-});
+function getSupabaseClient() {
+    return __awaiter(this, void 0, void 0, function* () {
+        var _a, _b;
+        const supabase = (0, supabase_js_1.createClient)((_a = process.env.NEXT_PUBLIC_SUPABASE_URL) !== null && _a !== void 0 ? _a : assert_1.default.fail('NEXT_PUBLIC_SUPABASE_URL is not defined'), (_b = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) !== null && _b !== void 0 ? _b : assert_1.default.fail('NEXT_PUBLIC_SUPABASE_ANON_KEY is not defined'), {
+            auth: {
+                flowType: 'pkce',
+                autoRefreshToken: false,
+                persistSession: true,
+                detectSessionInUrl: true
+            }
+        });
+        return supabase;
+    });
+}
 //helper functions to interact with the database
 //--------------------------------------------Authentication Functions--------------------------------------------------//
-function createUser(email, password) {
+function createUser(email, password, supabaseClient) {
     return __awaiter(this, void 0, void 0, function* () {
-        const { data, error } = yield supabase.auth.signUp({
+        const { data, error } = yield supabaseClient.auth.signUp({
             email,
             password,
         });
@@ -43,9 +57,9 @@ function createUser(email, password) {
     });
 }
 //TODO: DOES NOT WORK YET
-function deleteUser(email) {
+function deleteUser(email, supabaseClient) {
     return __awaiter(this, void 0, void 0, function* () {
-        const { data, error } = yield supabase.auth.admin.deleteUser('5e3ae116-297b-41cd-93a8-a1d55af10f1e');
+        const { data, error } = yield supabaseClient.auth.admin.deleteUser('5e3ae116-297b-41cd-93a8-a1d55af10f1e');
         if (error) {
             console.error('Error deleting user:', error.message);
             throw error;
@@ -57,7 +71,7 @@ function deleteUser(email) {
  * Verifies a JWT token and returns the decoded user information.
  *
  * @param token - The JWT token to verify.
- * @returns the decoded user information from the JWT token.
+ * @returns the decoded user information from the JWT token (has id attribute)
  * @throws Will throw an error if the JWT secret is not defined or if the token is invalid.
  */
 function verifyToken(token) {
@@ -74,27 +88,25 @@ function verifyToken(token) {
  * Decodes a JWT token without verifying its signature or that its expired (in string format).
  *
  * @param token - The JWT token to decode.
- * @returns the payload of the JWT token as a string.
+ * @returns the payload of the JWT token as a JWT token.
  * @throws Will throw an error if the token cannot be decoded.
  */
 function decodeToken(token) {
-    return __awaiter(this, void 0, void 0, function* () {
-        var _a;
-        const decodedData = (_a = jsonwebtoken_1.default.decode(token, { complete: true })) !== null && _a !== void 0 ? _a : assert_1.default.fail('Failed to decode token');
-        return decodedData.payload;
-    });
+    var _a;
+    const decodedData = (_a = jsonwebtoken_1.default.decode(token, { complete: true })) !== null && _a !== void 0 ? _a : assert_1.default.fail('Failed to decode token');
+    return decodedData;
 }
 /**
  * Tries to sign the user in with a username and password, and returns the access token and refresh token.
  *
  * @param email email of the user
  * @param password password of the user
- * @returns access token and refresh token as a tuple
+ * @returns access token and refresh token and the userid as a tuple
  * @throws Will throw an error if the login fails
  */
-function signInAndGetToken(email, password) {
+function signInAndGetToken(email, password, supabaseClient) {
     return __awaiter(this, void 0, void 0, function* () {
-        const { data, error } = yield supabase.auth.signInWithPassword({
+        const { data, error } = yield supabaseClient.auth.signInWithPassword({
             email,
             password,
         });
@@ -106,7 +118,8 @@ function signInAndGetToken(email, password) {
         const refreshToken = data.session.refresh_token;
         console.log('✅ Access Token:', accessToken);
         console.log('🔁 Refresh Token:', refreshToken);
-        return [accessToken, refreshToken];
+        console.log(data.session);
+        return [accessToken, refreshToken, data.session.user.id];
     });
 }
 /**
@@ -117,10 +130,10 @@ function signInAndGetToken(email, password) {
  * @throws Will throw an error if the sign out fails (already signed out, invalid token, etc.) Will throw
  * AuthSessionMissingError if the token is invalid or the session has expired.
  */
-function signOut(token, scope) {
+function signOut(token, supabaseClient, scope) {
     return __awaiter(this, void 0, void 0, function* () {
         //const { error } = await supabase.auth.signOut();
-        const { error: revokeError } = yield supabase.auth.admin.signOut(token, scope);
+        const { error: revokeError } = yield supabaseClient.auth.admin.signOut(token, scope);
         if (revokeError) {
             if (revokeError instanceof supabase_js_1.AuthSessionMissingError) {
                 console.error('Unauthorized: Invalid token or session expired');
@@ -144,9 +157,9 @@ function signOut(token, scope) {
  * @param refreshToken - The refresh token to use for signing in.
  * @return A tuple containing the new access token and refresh token.
  */
-function useSupaBaseRefreshToken(refreshToken) {
+function useSupaBaseRefreshToken(refreshToken, supabaseClient) {
     return __awaiter(this, void 0, void 0, function* () {
-        const { data, error } = yield supabase.auth.refreshSession({ refresh_token: refreshToken });
+        const { data, error } = yield supabaseClient.auth.refreshSession({ refresh_token: refreshToken });
         if (error) {
             console.error('Refresh token error:', error.message);
             throw error;
@@ -161,11 +174,11 @@ function useSupaBaseRefreshToken(refreshToken) {
         return [accessToken, newRefreshToken];
     });
 }
-function oathSignIn() {
+function oathSignIn(supabaseClient) {
     return __awaiter(this, void 0, void 0, function* () {
         // This function is not implemented yet, but it will handle OAuth sign-in
         // using the Supabase client.
-        supabase.auth.signInWithOAuth({
+        supabaseClient.auth.signInWithOAuth({
             provider: 'google', // or any other OAuth provider supported by Supabase
             options: {
                 redirectTo: 'http://localhost:3000/auth/callback', // replace with your redirect URL after they are confirmed
@@ -175,13 +188,26 @@ function oathSignIn() {
         throw new Error('OAuth sign-in is not implemented yet.');
     });
 }
+function deleteAccount(supabaseClient) {
+    return __awaiter(this, void 0, void 0, function* () {
+        // This function is not implemented yet, but it will handle account deletion
+        // using the Supabase client.
+        const { error } = yield supabaseClient.auth.admin.deleteUser('5e3ae116-297b-41cd-93a8-a1d55af10f1e'); // replace with actual user ID
+        if (error) {
+            console.error('Error deleting account:', error.message);
+            throw error;
+        }
+        console.log('Account deleted successfully');
+    });
+}
 //--------------------------------------------Main Function--------------------------------------------------//
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
-        yield createUser("muktharamesh20@gmail.com", "hehehehehe");
-        let [token, refreshToken] = yield signInAndGetToken('muktharamesh20@gmail.com', 'hehehehehe');
+        const supabaseClient = yield getSupabaseClient();
+        yield createUser("muktharamesh20@gmail.com", "AthenaWarrior0212*", supabaseClient);
+        let [token, refreshToken] = yield signInAndGetToken('muktharamesh20@gmail.com', 'AthenaWarrior0212*', supabaseClient);
         try {
-            [token, refreshToken] = yield useSupaBaseRefreshToken(refreshToken);
+            [token, refreshToken] = yield useSupaBaseRefreshToken(refreshToken, supabaseClient);
         }
         catch (error) {
             console.error('Error refreshing token:', error);
@@ -190,11 +216,11 @@ function main() {
         console.log(jsonwebtoken_1.default.decode(token, { complete: true }));
         console.log(yield verifyToken(token));
         try {
-            yield signOut(token, 'global');
+            yield signOut(token, supabaseClient, 'global');
         }
         catch (error) {
             console.error('Error signing out:', error);
         }
     });
 }
-main();
+//main()
