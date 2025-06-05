@@ -97,10 +97,7 @@ async function getFollowingListUserName(userId: string, supabaseClient: Supabase
 }
 
 
-async function getPostsFromUser(
-    userId: string,
-    supabaseClient: SupabaseClient<Database>
-): Promise<void> {
+async function getPostsFromUser(userId: string, supabaseClient: SupabaseClient<Database>): Promise<void> {
     const { data, error } = await supabaseClient
         .from('post')
         .select('*')
@@ -114,15 +111,62 @@ async function getPostsFromUser(
     console.log('Posts data:', data);
 }
 
+//-----------------------------------------------------------------------------------------------------------//
+async function acceptFollowerRequest(requester_id: string, my_id:string, supabaseClient: SupabaseClient<Database>): Promise<void> {
+    const { data, error } = await supabaseClient
+        .from('people_to_following')
+        .insert({ follower_id: requester_id, followed_id: my_id });
+
+    if (error) {
+        console.error('Error accepting follower request:', error.message);
+        throw error;
+    }
+
+    console.log('Follower request accepted:', data);
+}
+
+async function rejectOrRevokeFollowerRequest(requester_id: string, followed_id:string, supabaseClient: SupabaseClient<Database>): Promise<void> {
+    const { data, error } = await supabaseClient
+        .from('follow_request')
+        .delete()
+        .match({ requester: requester_id, followed_id: followed_id });
+
+    if (error) {
+        console.error('Error rejecting follower request:', error.message);
+        throw error;
+    }
+
+    console.log('Follower request rejected:', data);
+}
+
+async function createFollowerRequest(my_id:string, follower_id: string, supabaseClient: SupabaseClient<Database>): Promise<void> {
+    const { data, error } = await supabaseClient
+        .from('follow_request')
+        .insert({ requester: my_id, followed_id: follower_id });
+
+    if (error) {
+        console.error('Error creating follower request:', error.message);
+        throw error;
+    }
+
+    console.log('Follower request created:', data);
+}
+
 //--------------------------------------------Main Function--------------------------------------------------//
 async function main(): Promise<void> {
+    const user20 = '631fc63b-98d6-4434-a6b8-6c5c6d584069';
+    const abc = '70f8a317-c06b-471b-a51c-4b61a5fc35fa';
+    const another = 'a08d9256-23f9-426e-9e36-a53d504c92e0';
+    const user21 = 'da2b0a4b-ca12-40a2-b6cd-aa08e64493cb';
+    const onefinal = 'f4790ec6-eb7f-4190-b778-27909cafa49f';
     const supabase = await getSupabaseClient();
-    let [token, refreshToken, user_id] = await signInAndGetToken('abc@gmail.com', 'abcabc', supabase);
+    let [token, refreshToken, user_id] = await signInAndGetToken('muktharamesh21@gmail.com', 'AthenaWarrior0212*', supabase);
     await getViewershipTag(supabase);
     console.log("User id:", user_id);
-    user_id = 'f4790ec6-eb7f-4190-b778-27909cafa49f'
-    console.log('followers')
-    console.log(await getFollowerListUserName(user_id, supabase));
+
+    //await createFollowerRequest(user_id, abc, supabase);
+    //await rejectOrRevokeFollowerRequest(user_id, user20, supabase);
+    await acceptFollowerRequest(abc, user_id, supabase);
     signOut(token, supabase);
 }
 

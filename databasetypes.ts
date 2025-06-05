@@ -140,6 +140,39 @@ export type Database = {
         }
         Relationships: []
       }
+      follow_request: {
+        Row: {
+          created_at: string
+          followed_id: string
+          requester: string
+        }
+        Insert: {
+          created_at?: string
+          followed_id: string
+          requester: string
+        }
+        Update: {
+          created_at?: string
+          followed_id?: string
+          requester?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "follow_request_followed_id_fkey"
+            columns: ["followed_id"]
+            isOneToOne: false
+            referencedRelation: "usersettings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "follow_request_requester_fkey"
+            columns: ["requester"]
+            isOneToOne: false
+            referencedRelation: "usersettings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       group_calendar_category_tags: {
         Row: {
           category_name: string | null
@@ -301,18 +334,18 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "follwer_request_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["group_id"]
+          },
+          {
             foreignKeyName: "join_request_asker_fkey"
             columns: ["asker"]
             isOneToOne: false
             referencedRelation: "usersettings"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "join_request_group_id_fkey"
-            columns: ["group_id"]
-            isOneToOne: false
-            referencedRelation: "groups"
-            referencedColumns: ["group_id"]
           },
         ]
       }
@@ -962,6 +995,10 @@ export type Database = {
       }
       can_view_post_invoker: {
         Args: { post_id: string }
+        Returns: boolean
+      }
+      is_following: {
+        Args: { follower: string; followed: string }
         Returns: boolean
       }
     }
