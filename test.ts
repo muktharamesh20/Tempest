@@ -40,32 +40,60 @@ async function getViewershipTag(supabaseClient: SupabaseClient<Database>): Promi
     console.log('Viewership tag data:', data);
 }
 
-async function getFollowedList( userId: string, supabaseClient: SupabaseClient<Database>): Promise<string[]> {
+async function getFollowingListID( userId: string, supabaseClient: SupabaseClient<Database>): Promise<string[]> {
     const { data, error } = await supabaseClient
         .from('people_to_following')
-        .select('*')
-        //.eq('followed_id', userId);
+        .select('followed_id')
+        .eq('follower_id', userId);
 
     if (error) {
         console.error('Error fetching followers:', error.message);
         throw error;
     }
 
-    return(data.map((following: friend) => following.follower_id));
+    return(data.map((following) => following.followed_id));
 }
 
-async function getFollowerList( userId: string, supabaseClient: SupabaseClient<Database>): Promise<string[]> {
+async function getFollowerListID( userId: string, supabaseClient: SupabaseClient<Database>): Promise<string[]> {
     const { data, error } = await supabaseClient
         .from('people_to_following')
-        .select('*')
-        //.eq('follower_id', userId);
+        .select('follower_id')
+        .eq('followed_id', userId);
 
     if (error) {
         console.error('Error fetching followers:', error.message);
         throw error;
     }
 
-    return(data.map((following: friend) => following.followed_id));
+    return(data.map((following) => following.follower_id));
+}
+
+async function getFollowerListUserName( userId: string, supabaseClient: SupabaseClient<Database>): Promise<string[]> {
+    const { data, error } = await supabaseClient
+        .from('people_to_following')
+        .select('usersettings!follower_id  (username)')
+        .eq('followed_id', userId);
+
+    if (error) {
+        console.error('Error fetching followers:', error.message);
+        throw error;
+    }
+
+    return(data.map((following) => following.usersettings.username).filter((username) => username !== null && username !== undefined));
+}
+
+async function getFollowingListUserName(userId: string, supabaseClient: SupabaseClient<Database>): Promise<string[]> {
+    const { data, error } = await supabaseClient
+        .from('people_to_following')
+        .select('usersettings!followed_id  (username)')
+        .eq('follower_id', userId);
+
+    if (error) {
+        console.error('Error fetching followers:', error.message);
+        throw error;
+    }
+
+    return(data.map((following) => following.usersettings.username).filter((username) => username !== null && username !== undefined));
 }
 
 
@@ -89,11 +117,12 @@ async function getPostsFromUser(
 //--------------------------------------------Main Function--------------------------------------------------//
 async function main(): Promise<void> {
     const supabase = await getSupabaseClient();
-    let [token, refreshToken, user_id] = await signInAndGetToken('muktharamesh20@gmail.com', 'AthenaWarrior0212*', supabase);
+    let [token, refreshToken, user_id] = await signInAndGetToken('abc@gmail.com', 'abcabc', supabase);
     await getViewershipTag(supabase);
     console.log("User id:", user_id);
+    user_id = 'f4790ec6-eb7f-4190-b778-27909cafa49f'
     console.log('followers')
-    console.log(await getFollowerList(user_id, supabase));
+    console.log(await getFollowerListUserName(user_id, supabase));
     signOut(token, supabase);
 }
 

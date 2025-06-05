@@ -28,12 +28,25 @@ function getViewershipTag(supabaseClient) {
         console.log('Viewership tag data:', data);
     });
 }
-function getFollowedList(userId, supabaseClient) {
+function getFollowingListID(userId, supabaseClient) {
     return __awaiter(this, void 0, void 0, function* () {
         const { data, error } = yield supabaseClient
             .from('people_to_following')
-            .select('*');
-        //.eq('followed_id', userId);
+            .select('followed_id')
+            .eq('follower_id', userId);
+        if (error) {
+            console.error('Error fetching followers:', error.message);
+            throw error;
+        }
+        return (data.map((following) => following.followed_id));
+    });
+}
+function getFollowerListID(userId, supabaseClient) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const { data, error } = yield supabaseClient
+            .from('people_to_following')
+            .select('follower_id')
+            .eq('followed_id', userId);
         if (error) {
             console.error('Error fetching followers:', error.message);
             throw error;
@@ -41,17 +54,30 @@ function getFollowedList(userId, supabaseClient) {
         return (data.map((following) => following.follower_id));
     });
 }
-function getFollowerList(userId, supabaseClient) {
+function getFollowerListUserName(userId, supabaseClient) {
     return __awaiter(this, void 0, void 0, function* () {
         const { data, error } = yield supabaseClient
             .from('people_to_following')
-            .select('*');
-        //.eq('follower_id', userId);
+            .select('usersettings!follower_id  (username)')
+            .eq('followed_id', userId);
         if (error) {
             console.error('Error fetching followers:', error.message);
             throw error;
         }
-        return (data.map((following) => following.followed_id));
+        return (data.map((following) => following.usersettings.username).filter((username) => username !== null && username !== undefined));
+    });
+}
+function getFollowingListUserName(userId, supabaseClient) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const { data, error } = yield supabaseClient
+            .from('people_to_following')
+            .select('usersettings!followed_id  (username)')
+            .eq('follower_id', userId);
+        if (error) {
+            console.error('Error fetching followers:', error.message);
+            throw error;
+        }
+        return (data.map((following) => following.usersettings.username).filter((username) => username !== null && username !== undefined));
     });
 }
 function getPostsFromUser(userId, supabaseClient) {
@@ -71,11 +97,12 @@ function getPostsFromUser(userId, supabaseClient) {
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
         const supabase = yield (0, auth_1.getSupabaseClient)();
-        let [token, refreshToken, user_id] = yield (0, auth_1.signInAndGetToken)('muktharamesh20@gmail.com', 'AthenaWarrior0212*', supabase);
+        let [token, refreshToken, user_id] = yield (0, auth_1.signInAndGetToken)('abc@gmail.com', 'abcabc', supabase);
         yield getViewershipTag(supabase);
         console.log("User id:", user_id);
+        user_id = 'f4790ec6-eb7f-4190-b778-27909cafa49f';
         console.log('followers');
-        console.log(yield getFollowerList(user_id, supabase));
+        console.log(yield getFollowerListUserName(user_id, supabase));
         (0, auth_1.signOut)(token, supabase);
     });
 }
