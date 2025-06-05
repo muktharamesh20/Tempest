@@ -533,17 +533,17 @@ export type Database = {
       people_to_viewership_tag: {
         Row: {
           owner_id: string
-          person_asscoiated: string
+          person_associated: string
           viewership_tag: string
         }
         Insert: {
           owner_id: string
-          person_asscoiated: string
+          person_associated: string
           viewership_tag: string
         }
         Update: {
           owner_id?: string
-          person_asscoiated?: string
+          person_associated?: string
           viewership_tag?: string
         }
         Relationships: [
@@ -555,8 +555,8 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "people_to_viewership_tag_person_asscoiated_fkey"
-            columns: ["person_asscoiated"]
+            foreignKeyName: "people_to_viewership_tag_person_associated_fkey"
+            columns: ["person_associated"]
             isOneToOne: false
             referencedRelation: "usersettings"
             referencedColumns: ["id"]
@@ -580,6 +580,7 @@ export type Database = {
           inspired_by_count: number
           liked_count: number
           owner_id: string
+          title: string
           todo_id: string | null
         }
         Insert: {
@@ -591,6 +592,7 @@ export type Database = {
           inspired_by_count?: number
           liked_count?: number
           owner_id: string
+          title: string
           todo_id?: string | null
         }
         Update: {
@@ -602,6 +604,7 @@ export type Database = {
           inspired_by_count?: number
           liked_count?: number
           owner_id?: string
+          title?: string
           todo_id?: string | null
         }
         Relationships: [

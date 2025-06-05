@@ -84,21 +84,22 @@ function getPostsFromUser(userId, supabaseClient) {
     return __awaiter(this, void 0, void 0, function* () {
         const { data, error } = yield supabaseClient
             .from('post')
-            .select('*')
-            .eq('user_id', userId);
+            .select('*');
+        //.eq('owner_id', userId);
         if (error) {
             console.error('Error fetching posts:', error.message);
             throw error;
         }
-        console.log('Posts data:', data);
+        console.log('Posts data:', data.map(post => (post.title)));
+        return data.map(post => (post.id));
     });
 }
 //-----------------------------------------------------------------------------------------------------------//
-function acceptFollowerRequest(requester_id, followed_id, supabaseClient) {
+function acceptFollowerRequest(requester_id, my_id, supabaseClient) {
     return __awaiter(this, void 0, void 0, function* () {
         const { data, error } = yield supabaseClient
             .from('people_to_following')
-            .insert({ follower_id: requester_id, followed_id: followed_id });
+            .insert({ follower_id: requester_id, followed_id: my_id });
         if (error) {
             console.error('Error accepting follower request:', error.message);
             throw error;
@@ -140,12 +141,13 @@ function main() {
         const user21 = 'da2b0a4b-ca12-40a2-b6cd-aa08e64493cb';
         const onefinal = 'f4790ec6-eb7f-4190-b778-27909cafa49f';
         const supabase = yield (0, auth_1.getSupabaseClient)();
-        let [token, refreshToken, user_id] = yield (0, auth_1.signInAndGetToken)('muktharamesh21@gmail.com', 'AthenaWarrior0212*', supabase);
+        let [token, refreshToken, user_id] = yield (0, auth_1.signInAndGetToken)('abc@gmail.com', 'abcabc', supabase);
         yield getViewershipTag(supabase);
         console.log("User id:", user_id);
         //await createFollowerRequest(user_id, abc, supabase);
         //await rejectOrRevokeFollowerRequest(user_id, user20, supabase);
-        yield acceptFollowerRequest(abc, user_id, supabase);
+        //await acceptFollowerRequest(abc, user_id, supabase);
+        console.log(yield getPostsFromUser(user_id, supabase));
         (0, auth_1.signOut)(token, supabase);
     });
 }

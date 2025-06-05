@@ -97,18 +97,19 @@ async function getFollowingListUserName(userId: string, supabaseClient: Supabase
 }
 
 
-async function getPostsFromUser(userId: string, supabaseClient: SupabaseClient<Database>): Promise<void> {
+async function getPostsFromUser(userId: string, supabaseClient: SupabaseClient<Database>): Promise<string[]> {
     const { data, error } = await supabaseClient
         .from('post')
         .select('*')
-        .eq('user_id', userId);
+        //.eq('owner_id', userId);
 
     if (error) {
         console.error('Error fetching posts:', error.message);
         throw error;
     }
 
-    console.log('Posts data:', data);
+    console.log('Posts data:', data.map(post => (post.title)));
+    return data.map(post => (post.id));
 }
 
 //-----------------------------------------------------------------------------------------------------------//
@@ -160,13 +161,14 @@ async function main(): Promise<void> {
     const user21 = 'da2b0a4b-ca12-40a2-b6cd-aa08e64493cb';
     const onefinal = 'f4790ec6-eb7f-4190-b778-27909cafa49f';
     const supabase = await getSupabaseClient();
-    let [token, refreshToken, user_id] = await signInAndGetToken('muktharamesh21@gmail.com', 'AthenaWarrior0212*', supabase);
+    let [token, refreshToken, user_id] = await signInAndGetToken('abc@gmail.com', 'abcabc', supabase);
     await getViewershipTag(supabase);
     console.log("User id:", user_id);
 
     //await createFollowerRequest(user_id, abc, supabase);
     //await rejectOrRevokeFollowerRequest(user_id, user20, supabase);
-    await acceptFollowerRequest(abc, user_id, supabase);
+    //await acceptFollowerRequest(abc, user_id, supabase);
+    console.log(await getPostsFromUser(user_id, supabase));
     signOut(token, supabase);
 }
 
