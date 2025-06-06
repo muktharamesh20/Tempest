@@ -204,30 +204,30 @@ export type Database = {
       }
       groups: {
         Row: {
+          admins_invite: boolean
           created_at: string | null
           group_id: string
           owner: string
-          owner_invites: boolean
           profile_picture: string | null
           public_calendar: boolean
           public_special_events: boolean
           title: string
         }
         Insert: {
+          admins_invite?: boolean
           created_at?: string | null
           group_id?: string
           owner: string
-          owner_invites?: boolean
           profile_picture?: string | null
           public_calendar?: boolean
           public_special_events: boolean
           title: string
         }
         Update: {
+          admins_invite?: boolean
           created_at?: string | null
           group_id?: string
           owner?: string
-          owner_invites?: boolean
           profile_picture?: string | null
           public_calendar?: boolean
           public_special_events?: boolean
@@ -283,7 +283,7 @@ export type Database = {
         Insert: {
           created_at?: string | null
           group_id: string
-          requester: string
+          requester?: string
           user_to_invite: string
         }
         Update: {
@@ -323,7 +323,7 @@ export type Database = {
           group_id: string
         }
         Insert: {
-          asker: string
+          asker?: string
           created_at?: string
           group_id: string
         }
@@ -417,18 +417,21 @@ export type Database = {
           group_id: string
           person_id: string
           public_on_calendar: boolean
+          role: string
           show_on_calendar: boolean
         }
         Insert: {
           group_id: string
           person_id: string
           public_on_calendar?: boolean
+          role?: string
           show_on_calendar?: boolean
         }
         Update: {
           group_id?: string
           person_id?: string
           public_on_calendar?: boolean
+          role?: string
           show_on_calendar?: boolean
         }
         Relationships: [
@@ -911,7 +914,7 @@ export type Database = {
           links: string[] | null
           manually_approve_tags: boolean | null
           middle_name: string | null
-          public_or_private: boolean | null
+          public_or_private: string | null
           username: string | null
         }
         Insert: {
@@ -925,7 +928,7 @@ export type Database = {
           links?: string[] | null
           manually_approve_tags?: boolean | null
           middle_name?: string | null
-          public_or_private?: boolean | null
+          public_or_private?: string | null
           username?: string | null
         }
         Update: {
@@ -939,13 +942,14 @@ export type Database = {
           links?: string[] | null
           manually_approve_tags?: boolean | null
           middle_name?: string | null
-          public_or_private?: boolean | null
+          public_or_private?: string | null
           username?: string | null
         }
         Relationships: []
       }
       viewership_tags: {
         Row: {
+          followers_or_all: string | null
           group_id: string | null
           id: string
           owner_id: string | null
@@ -953,6 +957,7 @@ export type Database = {
           tag_name: string
         }
         Insert: {
+          followers_or_all?: string | null
           group_id?: string | null
           id?: string
           owner_id?: string | null
@@ -960,6 +965,7 @@ export type Database = {
           tag_name?: string
         }
         Update: {
+          followers_or_all?: string | null
           group_id?: string | null
           id?: string
           owner_id?: string | null
@@ -997,8 +1003,12 @@ export type Database = {
         Returns: boolean
       }
       can_view_post_invoker: {
-        Args: { post_id: string }
+        Args: { post_id: string } | { post_id: string; owner_id: string }
         Returns: boolean
+      }
+      get_group_ids_for_user: {
+        Args: { uid: string }
+        Returns: string[]
       }
       is_following: {
         Args: { follower: string; followed: string }

@@ -101,7 +101,7 @@ async function getPostsFromUser(userId: string, supabaseClient: SupabaseClient<D
     const { data, error } = await supabaseClient
         .from('post')
         .select('*')
-        //.eq('owner_id', userId);
+        .eq('owner_id', userId);
 
     if (error) {
         console.error('Error fetching posts:', error.message);
@@ -153,6 +153,60 @@ async function createFollowerRequest(my_id:string, follower_id: string, supabase
     console.log('Follower request created:', data);
 }
 
+//--------------------------------------------Group stuff---------------------------------------------------//
+async function createGroup(groupName: string, userId: string, supabaseClient: SupabaseClient<Database>): Promise<void> {
+    const { data, error } = await supabaseClient
+        .from('group')
+        .insert({ name: groupName, owner_id: userId });
+
+    if (error) {
+        console.error('Error creating group:', error.message);
+        throw error;
+    }
+
+    console.log('Group created:', data);
+}
+
+async function transferOwnership(groupId: string, newOwnerId: string, supabaseClient: SupabaseClient<Database>): Promise<void> {
+    //must only change one person's role to "owner"... you will automatically transform into a general member
+}
+
+async function changeOwnership(groupId: string, newOwnerId: string, newRole: 'admin' | 'general', supabaseClient: SupabaseClient<Database>): Promise<void> {
+    const { data, error } = await supabaseClient
+        .from('group')
+        .update({ owner_id: newOwnerId })
+        .eq('id', groupId);
+
+    if (error) {
+        console.error('Error changing group ownership:', error.message);
+        throw error;
+    }
+
+    console.log('Group ownership changed:', data);
+}
+
+async function requestJoinGroup(groupId: string, userId: string, supabaseClient: SupabaseClient<Database>): Promise<void> {
+}
+
+async function inviteMemberToGroup(groupId: string, userId: string, supabaseClient: SupabaseClient<Database>): Promise<void> {
+}
+
+async function acceptGroupInvite(groupId: string, userId: string, supabaseClient: SupabaseClient<Database>): Promise<void> {
+    //Must create a join request
+}
+
+async function rejectGroupInvite(groupId: string, userId: string, supabaseClient: SupabaseClient<Database>): Promise<void> {
+    //Must delete the invite request
+}
+
+async function rejectJoinRequest(groupId: string, userId: string, supabaseClient: SupabaseClient<Database>): Promise<void> {
+    // Must delete the join request
+}
+
+async function deleteGroup(groupId: string, supabaseClient: SupabaseClient<Database>): Promise<void> {
+}
+
+
 //--------------------------------------------Main Function--------------------------------------------------//
 async function main(): Promise<void> {
     const user20 = '631fc63b-98d6-4434-a6b8-6c5c6d584069';
@@ -161,14 +215,14 @@ async function main(): Promise<void> {
     const user21 = 'da2b0a4b-ca12-40a2-b6cd-aa08e64493cb';
     const onefinal = 'f4790ec6-eb7f-4190-b778-27909cafa49f';
     const supabase = await getSupabaseClient();
-    let [token, refreshToken, user_id] = await signInAndGetToken('abc@gmail.com', 'abcabc', supabase);
+    let [token, refreshToken, user_id] = await signInAndGetToken('muktharamesh21@gmail.com', 'AthenaWarrior0212*', supabase);
     await getViewershipTag(supabase);
     console.log("User id:", user_id);
 
     //await createFollowerRequest(user_id, abc, supabase);
     //await rejectOrRevokeFollowerRequest(user_id, user20, supabase);
     //await acceptFollowerRequest(abc, user_id, supabase);
-    console.log(await getPostsFromUser(user_id, supabase));
+    console.log(await getPostsFromUser(user20, supabase));
     signOut(token, supabase);
 }
 

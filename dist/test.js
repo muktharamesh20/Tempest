@@ -84,8 +84,8 @@ function getPostsFromUser(userId, supabaseClient) {
     return __awaiter(this, void 0, void 0, function* () {
         const { data, error } = yield supabaseClient
             .from('post')
-            .select('*');
-        //.eq('owner_id', userId);
+            .select('*')
+            .eq('owner_id', userId);
         if (error) {
             console.error('Error fetching posts:', error.message);
             throw error;
@@ -141,13 +141,13 @@ function main() {
         const user21 = 'da2b0a4b-ca12-40a2-b6cd-aa08e64493cb';
         const onefinal = 'f4790ec6-eb7f-4190-b778-27909cafa49f';
         const supabase = yield (0, auth_1.getSupabaseClient)();
-        let [token, refreshToken, user_id] = yield (0, auth_1.signInAndGetToken)('abc@gmail.com', 'abcabc', supabase);
+        let [token, refreshToken, user_id] = yield (0, auth_1.signInAndGetToken)('muktharamesh21@gmail.com', 'AthenaWarrior0212*', supabase);
         yield getViewershipTag(supabase);
         console.log("User id:", user_id);
         //await createFollowerRequest(user_id, abc, supabase);
         //await rejectOrRevokeFollowerRequest(user_id, user20, supabase);
         //await acceptFollowerRequest(abc, user_id, supabase);
-        console.log(yield getPostsFromUser(user_id, supabase));
+        console.log(yield getPostsFromUser(user20, supabase));
         (0, auth_1.signOut)(token, supabase);
     });
 }
