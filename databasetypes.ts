@@ -34,6 +34,100 @@ export type Database = {
   }
   public: {
     Tables: {
+      all_event_to_viewership_tags: {
+        Row: {
+          event_id: string
+          person_id: string
+          vt_id: string
+        }
+        Insert: {
+          event_id: string
+          person_id: string
+          vt_id: string
+        }
+        Update: {
+          event_id?: string
+          person_id?: string
+          vt_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_event_to_viewership_tags_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_event_to_viewership_tags_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "usersettings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_group_to_viewership_tags_post_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "post"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_group_to_viewership_tags_vt_id_fkey"
+            columns: ["vt_id"]
+            isOneToOne: false
+            referencedRelation: "viewership_tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      all_todo_to_viewership_tags: {
+        Row: {
+          person_id: string
+          todo_id: string
+          vt_id: string
+        }
+        Insert: {
+          person_id: string
+          todo_id: string
+          vt_id: string
+        }
+        Update: {
+          person_id?: string
+          todo_id?: string
+          vt_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "todo_group_to_viewership_tags_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "usersettings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "todo_to_viewership_tags_post_id_fkey"
+            columns: ["todo_id"]
+            isOneToOne: false
+            referencedRelation: "post"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "todo_to_viewership_tags_todo_id_fkey"
+            columns: ["todo_id"]
+            isOneToOne: false
+            referencedRelation: "todo"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "todo_to_viewership_tags_vt_id_fkey"
+            columns: ["vt_id"]
+            isOneToOne: false
+            referencedRelation: "viewership_tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       calendar_category_tags: {
         Row: {
           category_name: string
@@ -63,82 +157,84 @@ export type Database = {
           },
         ]
       }
-      classes_to_sections: {
-        Row: {
-          gen_class_id: string
-          instructors: string[] | null
-          section_id: string
-          section_name: string
-        }
-        Insert: {
-          gen_class_id: string
-          instructors?: string[] | null
-          section_id?: string
-          section_name: string
-        }
-        Update: {
-          gen_class_id?: string
-          instructors?: string[] | null
-          section_id?: string
-          section_name?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "classes_to_sections_gen_class_id_fkey"
-            columns: ["gen_class_id"]
-            isOneToOne: false
-            referencedRelation: "university_to_classes"
-            referencedColumns: ["class_id"]
-          },
-        ]
-      }
       event: {
         Row: {
           description: string
           end_date: string
-          end_repeat: string
+          end_repeat: string | null
           end_time: string
+          group_id: string | null
           id: string
           is_all_day: boolean
           location: string
+          owner_id: string | null
           repeat: string
           special_event: boolean | null
           start_date: string
           start_time: string
           title: string
           weekdays: string[]
+          working_on_this_todo: string | null
         }
         Insert: {
           description: string
           end_date: string
-          end_repeat: string
+          end_repeat?: string | null
           end_time: string
+          group_id?: string | null
           id?: string
           is_all_day?: boolean
           location: string
+          owner_id?: string | null
           repeat?: string
           special_event?: boolean | null
           start_date: string
           start_time: string
           title: string
           weekdays: string[]
+          working_on_this_todo?: string | null
         }
         Update: {
           description?: string
           end_date?: string
-          end_repeat?: string
+          end_repeat?: string | null
           end_time?: string
+          group_id?: string | null
           id?: string
           is_all_day?: boolean
           location?: string
+          owner_id?: string | null
           repeat?: string
           special_event?: boolean | null
           start_date?: string
           start_time?: string
           title?: string
           weekdays?: string[]
+          working_on_this_todo?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "event_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["group_id"]
+          },
+          {
+            foreignKeyName: "event_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "usersettings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_working_on_this_todo_fkey"
+            columns: ["working_on_this_todo"]
+            isOneToOne: false
+            referencedRelation: "todo"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       follow_request: {
         Row: {
@@ -202,34 +298,77 @@ export type Database = {
           },
         ]
       }
+      group_todos_and_events_to_vts: {
+        Row: {
+          group_id: string
+          person_id: string
+          vt_id: string
+        }
+        Insert: {
+          group_id: string
+          person_id: string
+          vt_id: string
+        }
+        Update: {
+          group_id?: string
+          person_id?: string
+          vt_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_todos_and_events_to_vts_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["group_id"]
+          },
+          {
+            foreignKeyName: "group_todos_and_events_to_vts_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "usersettings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_todos_and_events_to_vts_vt_id_fkey"
+            columns: ["vt_id"]
+            isOneToOne: false
+            referencedRelation: "viewership_tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       groups: {
         Row: {
+          admins_create_events: boolean
           admins_invite: boolean
+          admins_un_assign_todos: boolean
           created_at: string | null
           group_id: string
           owner: string
           profile_picture: string | null
-          public_calendar: boolean
           public_special_events: boolean
           title: string
         }
         Insert: {
+          admins_create_events?: boolean
           admins_invite?: boolean
+          admins_un_assign_todos?: boolean
           created_at?: string | null
           group_id?: string
           owner: string
           profile_picture?: string | null
-          public_calendar?: boolean
           public_special_events: boolean
           title: string
         }
         Update: {
+          admins_create_events?: boolean
           admins_invite?: boolean
+          admins_un_assign_todos?: boolean
           created_at?: string | null
           group_id?: string
           owner?: string
           profile_picture?: string | null
-          public_calendar?: boolean
           public_special_events?: boolean
           title?: string
         }
@@ -240,36 +379,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "usersettings"
             referencedColumns: ["id"]
-          },
-        ]
-      }
-      groups_to_categories: {
-        Row: {
-          category_id: string
-          group_id: string
-        }
-        Insert: {
-          category_id: string
-          group_id: string
-        }
-        Update: {
-          category_id?: string
-          group_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "groups_to_categories_category_id_fkey"
-            columns: ["category_id"]
-            isOneToOne: true
-            referencedRelation: "group_calendar_category_tags"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "groups_to_categories_group_id_fkey"
-            columns: ["group_id"]
-            isOneToOne: true
-            referencedRelation: "groups"
-            referencedColumns: ["group_id"]
           },
         ]
       }
@@ -349,19 +458,46 @@ export type Database = {
           },
         ]
       }
-      people_to_delete_added_group_events: {
+      people_to_close_friends: {
         Row: {
-          added_or_dropped: boolean
+          close_friend: string
+          person_id: string
+        }
+        Insert: {
+          close_friend: string
+          person_id: string
+        }
+        Update: {
+          close_friend?: string
+          person_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "people_to_close_friends_close_friend_fkey"
+            columns: ["close_friend"]
+            isOneToOne: false
+            referencedRelation: "usersettings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "people_to_close_friends_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "usersettings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      people_to_deleted_group_events: {
+        Row: {
           event_id: string
           user_id: string
         }
         Insert: {
-          added_or_dropped: boolean
           event_id: string
           user_id: string
         }
         Update: {
-          added_or_dropped?: boolean
           event_id?: string
           user_id?: string
         }
@@ -458,77 +594,32 @@ export type Database = {
           },
         ]
       }
-      people_to_sections: {
-        Row: {
-          section_id: string
-          user_id: string
-        }
-        Insert: {
-          section_id?: string
-          user_id?: string
-        }
-        Update: {
-          section_id?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "people_to_sections_section_id_fkey"
-            columns: ["section_id"]
-            isOneToOne: false
-            referencedRelation: "classes_to_sections"
-            referencedColumns: ["section_id"]
-          },
-          {
-            foreignKeyName: "people_to_sections_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: true
-            referencedRelation: "usersettings"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      people_to_university: {
+      people_to_liked: {
         Row: {
           person_id: string
-          public_on_calendar: boolean
-          school_email: string | null
-          show_on_calendar: boolean
-          university_id: number
-          verified_member: boolean | null
-          YOG: string | null
+          post_id: string
         }
         Insert: {
           person_id: string
-          public_on_calendar?: boolean
-          school_email?: string | null
-          show_on_calendar?: boolean
-          university_id: number
-          verified_member?: boolean | null
-          YOG?: string | null
+          post_id: string
         }
         Update: {
           person_id?: string
-          public_on_calendar?: boolean
-          school_email?: string | null
-          show_on_calendar?: boolean
-          university_id?: number
-          verified_member?: boolean | null
-          YOG?: string | null
+          post_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "people_to_university_person_id_fkey"
+            foreignKeyName: "people_to_liked_person_id_fkey"
             columns: ["person_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "usersettings"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "people_to_university_university_id_fkey"
-            columns: ["university_id"]
+            foreignKeyName: "people_to_liked_post_id_fkey"
+            columns: ["post_id"]
             isOneToOne: false
-            referencedRelation: "university"
+            referencedRelation: "post"
             referencedColumns: ["id"]
           },
         ]
@@ -579,7 +670,7 @@ export type Database = {
           description: string | null
           event_id: string | null
           id: string
-          imageLinks: string[] | null
+          imageLink: string | null
           inspired_by_count: number
           liked_count: number
           owner_id: string
@@ -591,7 +682,7 @@ export type Database = {
           description?: string | null
           event_id?: string | null
           id?: string
-          imageLinks?: string[] | null
+          imageLink?: string | null
           inspired_by_count?: number
           liked_count?: number
           owner_id: string
@@ -603,7 +694,7 @@ export type Database = {
           description?: string | null
           event_id?: string | null
           id?: string
-          imageLinks?: string[] | null
+          imageLink?: string | null
           inspired_by_count?: number
           liked_count?: number
           owner_id?: string
@@ -738,72 +829,75 @@ export type Database = {
           },
         ]
       }
-      sections_to_events: {
-        Row: {
-          adds_minus_deletes: number
-          event_id: string
-          is_default: boolean | null
-          section_id: string
-          special_event: boolean
-        }
-        Insert: {
-          adds_minus_deletes?: number
-          event_id?: string
-          is_default?: boolean | null
-          section_id?: string
-          special_event?: boolean
-        }
-        Update: {
-          adds_minus_deletes?: number
-          event_id?: string
-          is_default?: boolean | null
-          section_id?: string
-          special_event?: boolean
-        }
-        Relationships: [
-          {
-            foreignKeyName: "sections_to_events_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
-            referencedRelation: "event"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "sections_to_events_section_id_fkey"
-            columns: ["section_id"]
-            isOneToOne: false
-            referencedRelation: "classes_to_sections"
-            referencedColumns: ["section_id"]
-          },
-        ]
-      }
       todo: {
         Row: {
-          assigned_by: string | null
-          date_due: string
+          actual_time_taken: number | null
+          assigned_by: string
+          copy_of: string | null
+          create_seperate_todos: boolean
+          datetime_completed: string | null
           deadline: string | null
+          end_repeat: string | null
+          estimated_time_mins: number | null
+          group_id: string | null
           id: string
-          notes: string | null
+          media_link: string | null
+          notes: string
           person_id: string | null
+          priority: number | null
+          repeat_every: string
+          soft_deadline_of: string | null
+          specific_info_on_recorded_time: Json | null
+          start_date: string | null
           title: string
+          total_recored_time_taken: number | null
+          weekdays: string[]
         }
         Insert: {
-          assigned_by?: string | null
-          date_due: string
+          actual_time_taken?: number | null
+          assigned_by: string
+          copy_of?: string | null
+          create_seperate_todos?: boolean
+          datetime_completed?: string | null
           deadline?: string | null
+          end_repeat?: string | null
+          estimated_time_mins?: number | null
+          group_id?: string | null
           id?: string
-          notes?: string | null
+          media_link?: string | null
+          notes?: string
           person_id?: string | null
+          priority?: number | null
+          repeat_every?: string
+          soft_deadline_of?: string | null
+          specific_info_on_recorded_time?: Json | null
+          start_date?: string | null
           title: string
+          total_recored_time_taken?: number | null
+          weekdays: string[]
         }
         Update: {
-          assigned_by?: string | null
-          date_due?: string
+          actual_time_taken?: number | null
+          assigned_by?: string
+          copy_of?: string | null
+          create_seperate_todos?: boolean
+          datetime_completed?: string | null
           deadline?: string | null
+          end_repeat?: string | null
+          estimated_time_mins?: number | null
+          group_id?: string | null
           id?: string
-          notes?: string | null
+          media_link?: string | null
+          notes?: string
           person_id?: string | null
+          priority?: number | null
+          repeat_every?: string
+          soft_deadline_of?: string | null
+          specific_info_on_recorded_time?: Json | null
+          start_date?: string | null
           title?: string
+          total_recored_time_taken?: number | null
+          weekdays?: string[]
         }
         Relationships: [
           {
@@ -814,10 +908,31 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "todo_copy_of_fkey"
+            columns: ["copy_of"]
+            isOneToOne: false
+            referencedRelation: "event"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "todo_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["group_id"]
+          },
+          {
             foreignKeyName: "todo_person_id_fkey"
             columns: ["person_id"]
             isOneToOne: false
             referencedRelation: "usersettings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "todo_soft_deadline_of_fkey"
+            columns: ["soft_deadline_of"]
+            isOneToOne: false
+            referencedRelation: "todo"
             referencedColumns: ["id"]
           },
         ]
@@ -865,42 +980,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      university: {
-        Row: {
-          created_at: string
-          id: number
-          location: string | null
-        }
-        Insert: {
-          created_at?: string
-          id?: number
-          location?: string | null
-        }
-        Update: {
-          created_at?: string
-          id?: number
-          location?: string | null
-        }
-        Relationships: []
-      }
-      university_to_classes: {
-        Row: {
-          class_id: string
-          class_name: string
-          university_id: string
-        }
-        Insert: {
-          class_id?: string
-          class_name: string
-          university_id: string
-        }
-        Update: {
-          class_id?: string
-          class_name?: string
-          university_id?: string
-        }
-        Relationships: []
       }
       usersettings: {
         Row: {
@@ -994,6 +1073,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_view_event: {
+        Args: { event_id: string }
+        Returns: boolean
+      }
       can_view_post: {
         Args: { post_id: string }
         Returns: boolean
@@ -1006,12 +1089,26 @@ export type Database = {
         Args: { post_id: string } | { post_id: string; owner_id: string }
         Returns: boolean
       }
+      delete_specific_users: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       get_group_ids_for_user: {
         Args: { uid: string }
         Returns: string[]
       }
       is_following: {
         Args: { follower: string; followed: string }
+        Returns: boolean
+      }
+      viewership_tag_allows_viewer: {
+        Args:
+          | { viewership_tag_id: string; owner_of_vt: string }
+          | {
+              viewership_tag_id: string
+              owner_of_vt: string
+              curr_viewer: string
+            }
         Returns: boolean
       }
     }
