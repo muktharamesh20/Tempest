@@ -15,11 +15,26 @@
   "devDependencies": {
     "@types/express": "^5.0.2",
     "@types/jsonwebtoken": "^9.0.9",
-    "@types/node": "^22.15.21"
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^22.15.21",
+    "mocha": "^11.0.1"
+  },
+  "mocha": {
+    "reporter": "spec",
+    "exit": true
   },
   "scripts": {
     "auth": "tsc && node --require source-map-support/register dist/auth.js",
     "database": "tsc && node --require source-map-support/register dist/supabase.js",
-    "test": "tsc && node --require source-map-support/register dist/test.js"
+    "test": "tsc && node --require source-map-support/register dist/test.js",
+    "adding_deleting_users": "tsc && mocha dist/tests/adding_deleting_users.js",
+    "categories": "tsc && mocha dist/tests/categories.js",
+    "events": "tsc && mocha dist/tests/events.js",
+    "following_close_friends": "tsc && mocha dist/tests/following_close_friends.js",
+    "groups": "tsc && mocha dist/tests/groups.js",
+    "posts": "tsc && mocha dist/tests/posts.js",
+    "todos": "tsc && mocha dist/tests/todos.js",
+    "viewership_tags": "tsc && mocha dist/tests/viewership_tags.js",
+    "test_all": "tsc && mocha dist/tests/**/*.js"
   }
 }

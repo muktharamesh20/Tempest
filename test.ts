@@ -155,16 +155,17 @@ async function createFollowerRequest(my_id:string, follower_id: string, supabase
 
 //--------------------------------------------Group stuff---------------------------------------------------//
 async function createGroup(groupName: string, userId: string, supabaseClient: SupabaseClient<Database>): Promise<void> {
-    const { data, error } = await supabaseClient
-        .from('group')
-        .insert({ name: groupName, owner_id: userId });
+    //const { data, error } = await supabaseClient
+      //  .from('group')
+        //.insert({ name: groupName, owner_id: userId });
+    throw new Error('Not implemented yet');
 
-    if (error) {
-        console.error('Error creating group:', error.message);
-        throw error;
-    }
+    //if (error) {
+    //    console.error('Error creating group:', error.message);
+    //    throw error;
+    //}
 
-    console.log('Group created:', data);
+    //console.log('Group created:', data);
 }
 
 async function transferOwnership(groupId: string, newOwnerId: string, supabaseClient: SupabaseClient<Database>): Promise<void> {
@@ -172,17 +173,6 @@ async function transferOwnership(groupId: string, newOwnerId: string, supabaseCl
 }
 
 async function changeOwnership(groupId: string, newOwnerId: string, newRole: 'admin' | 'general', supabaseClient: SupabaseClient<Database>): Promise<void> {
-    const { data, error } = await supabaseClient
-        .from('group')
-        .update({ owner_id: newOwnerId })
-        .eq('id', groupId);
-
-    if (error) {
-        console.error('Error changing group ownership:', error.message);
-        throw error;
-    }
-
-    console.log('Group ownership changed:', data);
 }
 
 async function requestJoinGroup(groupId: string, userId: string, supabaseClient: SupabaseClient<Database>): Promise<void> {

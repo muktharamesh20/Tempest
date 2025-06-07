@@ -132,6 +132,56 @@ function createFollowerRequest(my_id, follower_id, supabaseClient) {
         console.log('Follower request created:', data);
     });
 }
+//--------------------------------------------Group stuff---------------------------------------------------//
+function createGroup(groupName, userId, supabaseClient) {
+    return __awaiter(this, void 0, void 0, function* () {
+        //const { data, error } = await supabaseClient
+        //  .from('group')
+        //.insert({ name: groupName, owner_id: userId });
+        throw new Error('Not implemented yet');
+        //if (error) {
+        //    console.error('Error creating group:', error.message);
+        //    throw error;
+        //}
+        //console.log('Group created:', data);
+    });
+}
+function transferOwnership(groupId, newOwnerId, supabaseClient) {
+    return __awaiter(this, void 0, void 0, function* () {
+        //must only change one person's role to "owner"... you will automatically transform into a general member
+    });
+}
+function changeOwnership(groupId, newOwnerId, newRole, supabaseClient) {
+    return __awaiter(this, void 0, void 0, function* () {
+    });
+}
+function requestJoinGroup(groupId, userId, supabaseClient) {
+    return __awaiter(this, void 0, void 0, function* () {
+    });
+}
+function inviteMemberToGroup(groupId, userId, supabaseClient) {
+    return __awaiter(this, void 0, void 0, function* () {
+    });
+}
+function acceptGroupInvite(groupId, userId, supabaseClient) {
+    return __awaiter(this, void 0, void 0, function* () {
+        //Must create a join request
+    });
+}
+function rejectGroupInvite(groupId, userId, supabaseClient) {
+    return __awaiter(this, void 0, void 0, function* () {
+        //Must delete the invite request
+    });
+}
+function rejectJoinRequest(groupId, userId, supabaseClient) {
+    return __awaiter(this, void 0, void 0, function* () {
+        // Must delete the join request
+    });
+}
+function deleteGroup(groupId, supabaseClient) {
+    return __awaiter(this, void 0, void 0, function* () {
+    });
+}
 //--------------------------------------------Main Function--------------------------------------------------//
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
