@@ -35,6 +35,7 @@
     "posts": "tsc && mocha dist/tests/posts.js",
     "todos": "tsc && mocha dist/tests/todos.js",
     "viewership_tags": "tsc && mocha dist/tests/viewership_tags.js",
+    "scheduling": "tsc && mocha dist/tests/scheduling.js",
     "test_all": "tsc && mocha dist/tests/**/*.js"
   }
 }

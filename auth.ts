@@ -165,7 +165,7 @@ export async function useSupaBaseRefreshToken(refreshToken: string, supabaseClie
   return [accessToken, newRefreshToken];
 }
 
-async function oathSignIn(supabaseClient: SupabaseClient<Database>): Promise<[string, string]> {
+export async function oathSignIn(supabaseClient: SupabaseClient<Database>): Promise<[string, string]> {
     // This function is not implemented yet, but it will handle OAuth sign-in
     // using the Supabase client.
     supabaseClient.auth.signInWithOAuth({
@@ -178,7 +178,10 @@ async function oathSignIn(supabaseClient: SupabaseClient<Database>): Promise<[st
     throw new Error('OAuth sign-in is not implemented yet.');
 }
 
-async function deleteAccount(supabaseClient: SupabaseClient<Database>): Promise<void> {
+export async function changePassword(supabaseClient: SupabaseClient<Database>, newPassword: string): Promise<void> {
+}
+
+export async function deleteAccount(supabaseClient: SupabaseClient<Database>): Promise<void> {
     // This function is not implemented yet, but it will handle account deletion
     // using the Supabase client.
     const { error } = await supabaseClient.auth.admin.deleteUser('5e3ae116-297b-41cd-93a8-a1d55af10f1e'); // replace with actual user ID
@@ -192,8 +195,8 @@ async function deleteAccount(supabaseClient: SupabaseClient<Database>): Promise<
 //--------------------------------------------Main Function--------------------------------------------------//
 async function main(): Promise<void> {
     const supabaseClient = await getSupabaseClient();
-    await createUser("muktharamesh20@gmail.com", "AthenaWarrior0212*", supabaseClient)
-    let [token, refreshToken] = await signInAndGetToken('muktharamesh20@gmail.com', 'AthenaWarrior0212*', supabaseClient);
+    await createUser("muktharamesh20@gmail.com", "abcabc", supabaseClient)
+    let [token, refreshToken] = await signInAndGetToken('muktharamesh20@gmail.com', 'abcabc', supabaseClient);
     try {
         [token, refreshToken] = await useSupaBaseRefreshToken(refreshToken, supabaseClient);
     } catch (error) {

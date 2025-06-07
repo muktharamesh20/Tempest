@@ -5,9 +5,7 @@ import fs from 'node:fs';
 
 import {getSupabaseClient, createUser, deleteUser, signInAndGetToken, signOut, useSupaBaseRefreshToken, oathSignIn, deleteAccount, changePassword} from '../auth.js';
 
-//This file tests modifiying user settings (permissions), different ways of signing in, and what happens when a user
-//is deleted or added.
-
+// This file tests the scheduling functionality.  This is the AI and productivity part where it will suggest when to work and stuff.  It will also keep track of when you work, and how long you work for, and will suggest when to take breaks, and when to work on different tasks.  It will also suggest when to do different tasks based on your schedule, and will help you manage your time better.
 
 describe('signing_up_users', function () {
     /**
