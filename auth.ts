@@ -27,6 +27,14 @@ export async function getSupabaseClient(): Promise<SupabaseClient<Database>> {
 
 
 //--------------------------------------------Authentication Functions--------------------------------------------------//
+/**
+ * 
+ * @param email email of the user to create
+ * @param password password of the user to create
+ * @param supabaseClient the Supabase client to use for creating the user
+ * @throws Will throw an error if the user creation fails, e.g. if the email is already in use or the password is too weak.
+ * @throws AuthWeakPasswordError if the password is too weak.
+ */
 export async function createUser(email: string, password: string, supabaseClient: SupabaseClient<Database> ): Promise<void> {
     const { data, error } = await supabaseClient.auth.signUp({
         email,
@@ -38,19 +46,7 @@ export async function createUser(email: string, password: string, supabaseClient
         throw error;
     }
 
-    console.log('User created successfully:', data);
-}
-
-//TODO: DOES NOT WORK YET
-export async function deleteUser(email: string, supabaseClient: SupabaseClient<Database>): Promise<void> {
-    const { data, error } = await supabaseClient.auth.admin.deleteUser('5e3ae116-297b-41cd-93a8-a1d55af10f1e');
-
-    if (error) {
-        console.error('Error deleting user:', error.message);
-        throw error;
-    }
-
-    console.log('User deleted successfully:', data);
+    console.log('User created successfully:', email);
 }
 
 /**
@@ -89,6 +85,7 @@ export function decodeToken(token: string): Jwt {
  * @param password password of the user
  * @returns access token and refresh token and the userid as a tuple
  * @throws Will throw an error if the login fails
+ * @throws AuthWeakPasswordError if weak password
  */
 export async function signInAndGetToken(email: string, password: string, supabaseClient: SupabaseClient<Database>): Promise<[string, string, string]> {
   const { data, error } = await supabaseClient.auth.signInWithPassword({
@@ -104,9 +101,10 @@ export async function signInAndGetToken(email: string, password: string, supabas
   const accessToken = data.session.access_token
   const refreshToken = data.session.refresh_token
 
-  console.log('✅ Access Token:', accessToken)
-  console.log('🔁 Refresh Token:', refreshToken)
-  console.log(data.session)
+  //console.log('✅ Access Token:', accessToken)
+  //console.log('🔁 Refresh Token:', refreshToken)
+  //console.log(data.session)
+  console.log('✅ signed in', email);
 
   return [accessToken, refreshToken, data.session.user.id];
 }
@@ -166,6 +164,20 @@ export async function useSupaBaseRefreshToken(refreshToken: string, supabaseClie
   return [accessToken, newRefreshToken];
 }
 
+export async function change_password(supabaseClient: SupabaseClient<Database>, newPassword: string): Promise<void> {
+    // This function is not implemented yet, but it will handle password change
+    // using the Supabase client.
+    const { error } = await supabaseClient.auth.updateUser({
+        password: newPassword,
+    });
+
+    if (error) {
+        console.error('Error changing password:', error.message);
+        throw error;
+    }
+    console.log('Password changed successfully');
+}
+
 export async function oathSignIn(supabaseClient: SupabaseClient<Database>): Promise<[string, string]> {
     // This function is not implemented yet, but it will handle OAuth sign-in
     // using the Supabase client.
@@ -183,9 +195,7 @@ export async function changePassword(supabaseClient: SupabaseClient<Database>, n
 }
 
 export async function deleteAccount(supabaseClient: SupabaseClient<Database>): Promise<void> {
-    // This function is not implemented yet, but it will handle account deletion
-    // using the Supabase client.
-    const { error } = await supabaseClient.auth.admin.deleteUser('5e3ae116-297b-41cd-93a8-a1d55af10f1e'); // replace with actual user ID
+    const { error } = await supabaseClient.functions.invoke('delete_user');
     if (error) {
         console.error('Error deleting account:', error.message);
         throw error;
@@ -196,8 +206,8 @@ export async function deleteAccount(supabaseClient: SupabaseClient<Database>): P
 //--------------------------------------------Main Function--------------------------------------------------//
 async function main(): Promise<void> {
     const supabaseClient = await getSupabaseClient();
-    await createUser("muktharamesh20@gmail.com", "abcabc", supabaseClient)
-    let [token, refreshToken] = await signInAndGetToken('muktharamesh20@gmail.com', 'abcabc', supabaseClient);
+    //await createUser("muktharamesh20@gmail.com", "abcabc", supabaseClient)
+    let [token, refreshToken] = await signInAndGetToken('muktharamesh20@gmail.com', 'AthenaWarrior0212*', supabaseClient);
     try {
         [token, refreshToken] = await useSupaBaseRefreshToken(refreshToken, supabaseClient);
     } catch (error) {

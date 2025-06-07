@@ -12,10 +12,38 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.deleteTestingUsers = deleteTestingUsers;
+exports.createTestingUsers = createTestingUsers;
 const auth_1 = require("./auth");
 const dotenv_1 = __importDefault(require("dotenv"));
 //allows us to use process.env to get environment variables
 dotenv_1.default.config();
+function deleteTestingUsers(supabaseClient) {
+    return __awaiter(this, void 0, void 0, function* () {
+        yield (0, auth_1.signInAndGetToken)('a@a.com', 'Alphabet08', supabaseClient);
+        yield (0, auth_1.deleteAccount)(supabaseClient);
+        yield (0, auth_1.signInAndGetToken)('b@b.com', 'Alphabet08', supabaseClient);
+        yield (0, auth_1.deleteAccount)(supabaseClient);
+        yield (0, auth_1.signInAndGetToken)('c@c.com', 'Alphabet08', supabaseClient);
+        yield (0, auth_1.deleteAccount)(supabaseClient);
+        yield (0, auth_1.signInAndGetToken)('d@d.com', 'Alphabet08', supabaseClient);
+        yield (0, auth_1.deleteAccount)(supabaseClient);
+        yield (0, auth_1.signInAndGetToken)('e@e.com', 'Alphabet08', supabaseClient);
+        yield (0, auth_1.deleteAccount)(supabaseClient);
+        yield (0, auth_1.signInAndGetToken)('f@f.com', 'Alphabet08', supabaseClient);
+        yield (0, auth_1.deleteAccount)(supabaseClient);
+    });
+}
+function createTestingUsers(supabaseClient) {
+    return __awaiter(this, void 0, void 0, function* () {
+        yield (0, auth_1.createUser)('a@a.com', 'Alphabet08', supabaseClient);
+        yield (0, auth_1.createUser)('b@b.com', 'Alphabet08', supabaseClient);
+        yield (0, auth_1.createUser)('c@c.com', 'Alphabet08', supabaseClient);
+        yield (0, auth_1.createUser)('d@d.com', 'Alphabet08', supabaseClient);
+        yield (0, auth_1.createUser)('e@e.com', 'Alphabet08', supabaseClient);
+        yield (0, auth_1.createUser)('f@f.com', 'Alphabet08', supabaseClient);
+    });
+}
 function getViewershipTag(supabaseClient) {
     return __awaiter(this, void 0, void 0, function* () {
         const { data, error } = yield supabaseClient

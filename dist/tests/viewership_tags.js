@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 // This file tests creating viewership tags, deleting viewership tags, and seeing which viewership tags show up when querying, etc.
-describe('signing_up_users', function () {
+describe('viewership tags', function () {
     /**
      * Testing strategy:
      *
@@ -27,10 +27,6 @@ describe('signing_up_users', function () {
      *      add ai suggested vts?
      *
      */
-    it('a subtest thingy', function () {
-    });
-});
-describe('adding_deleting_users', function () {
     it('a subtest thingy', function () {
     });
 });

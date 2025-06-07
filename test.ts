@@ -1,10 +1,11 @@
 import {createClient, SupabaseClient} from '@supabase/supabase-js'
 import { QueryResult, QueryData, QueryError } from '@supabase/supabase-js'
 import { Database, Tables, Enums } from './databasetypes'
-import {signInAndGetToken, signOut, getSupabaseClient, decodeToken} from './auth'
+import {signInAndGetToken, signOut, getSupabaseClient, decodeToken, createUser, deleteAccount} from './auth'
 import assert from 'assert'
 import dotenv from 'dotenv';
 import { get } from 'http'
+import { create } from 'domain'
 
 //allows us to use process.env to get environment variables
 dotenv.config();
@@ -27,6 +28,29 @@ type friend = {
     follower_id: string;
 };
 
+export async function deleteTestingUsers(supabaseClient: SupabaseClient<Database>): Promise<void> {
+    await signInAndGetToken('a@a.com', 'Alphabet08', supabaseClient);
+    await deleteAccount(supabaseClient);
+    await signInAndGetToken('b@b.com', 'Alphabet08', supabaseClient);
+    await deleteAccount(supabaseClient);
+    await signInAndGetToken('c@c.com', 'Alphabet08', supabaseClient);
+    await deleteAccount(supabaseClient);
+    await signInAndGetToken('d@d.com', 'Alphabet08', supabaseClient);
+    await deleteAccount(supabaseClient);
+    await signInAndGetToken('e@e.com', 'Alphabet08', supabaseClient);
+    await deleteAccount(supabaseClient);
+    await signInAndGetToken('f@f.com', 'Alphabet08', supabaseClient);
+    await deleteAccount(supabaseClient);
+}
+
+export async function createTestingUsers(supabaseClient: SupabaseClient<Database>): Promise<void> {
+    await createUser('a@a.com', 'Alphabet08', supabaseClient);
+    await createUser('b@b.com', 'Alphabet08', supabaseClient);
+    await createUser('c@c.com', 'Alphabet08', supabaseClient);
+    await createUser('d@d.com', 'Alphabet08', supabaseClient);
+    await createUser('e@e.com', 'Alphabet08', supabaseClient);
+    await createUser('f@f.com', 'Alphabet08', supabaseClient);
+}
 
 async function getViewershipTag(supabaseClient: SupabaseClient<Database>): Promise<void> {
     const { data, error } = await supabaseClient

@@ -14,12 +14,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getSupabaseClient = getSupabaseClient;
 exports.createUser = createUser;
-exports.deleteUser = deleteUser;
 exports.verifyToken = verifyToken;
 exports.decodeToken = decodeToken;
 exports.signInAndGetToken = signInAndGetToken;
 exports.signOut = signOut;
 exports.useSupaBaseRefreshToken = useSupaBaseRefreshToken;
+exports.change_password = change_password;
 exports.oathSignIn = oathSignIn;
 exports.changePassword = changePassword;
 exports.deleteAccount = deleteAccount;
@@ -46,6 +46,14 @@ function getSupabaseClient() {
 }
 //helper functions to interact with the database
 //--------------------------------------------Authentication Functions--------------------------------------------------//
+/**
+ *
+ * @param email email of the user to create
+ * @param password password of the user to create
+ * @param supabaseClient the Supabase client to use for creating the user
+ * @throws Will throw an error if the user creation fails, e.g. if the email is already in use or the password is too weak.
+ * @throws AuthWeakPasswordError if the password is too weak.
+ */
 function createUser(email, password, supabaseClient) {
     return __awaiter(this, void 0, void 0, function* () {
         const { data, error } = yield supabaseClient.auth.signUp({
@@ -56,18 +64,7 @@ function createUser(email, password, supabaseClient) {
             console.error('Error creating user:', error.message);
             throw error;
         }
-        console.log('User created successfully:', data);
-    });
-}
-//TODO: DOES NOT WORK YET
-function deleteUser(email, supabaseClient) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const { data, error } = yield supabaseClient.auth.admin.deleteUser('5e3ae116-297b-41cd-93a8-a1d55af10f1e');
-        if (error) {
-            console.error('Error deleting user:', error.message);
-            throw error;
-        }
-        console.log('User deleted successfully:', data);
+        console.log('User created successfully:', email);
     });
 }
 /**
@@ -106,6 +103,7 @@ function decodeToken(token) {
  * @param password password of the user
  * @returns access token and refresh token and the userid as a tuple
  * @throws Will throw an error if the login fails
+ * @throws AuthWeakPasswordError if weak password
  */
 function signInAndGetToken(email, password, supabaseClient) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -119,9 +117,10 @@ function signInAndGetToken(email, password, supabaseClient) {
         }
         const accessToken = data.session.access_token;
         const refreshToken = data.session.refresh_token;
-        console.log('✅ Access Token:', accessToken);
-        console.log('🔁 Refresh Token:', refreshToken);
-        console.log(data.session);
+        //console.log('✅ Access Token:', accessToken)
+        //console.log('🔁 Refresh Token:', refreshToken)
+        //console.log(data.session)
+        console.log('✅ signed in', email);
         return [accessToken, refreshToken, data.session.user.id];
     });
 }
@@ -177,6 +176,20 @@ function useSupaBaseRefreshToken(refreshToken, supabaseClient) {
         return [accessToken, newRefreshToken];
     });
 }
+function change_password(supabaseClient, newPassword) {
+    return __awaiter(this, void 0, void 0, function* () {
+        // This function is not implemented yet, but it will handle password change
+        // using the Supabase client.
+        const { error } = yield supabaseClient.auth.updateUser({
+            password: newPassword,
+        });
+        if (error) {
+            console.error('Error changing password:', error.message);
+            throw error;
+        }
+        console.log('Password changed successfully');
+    });
+}
 function oathSignIn(supabaseClient) {
     return __awaiter(this, void 0, void 0, function* () {
         // This function is not implemented yet, but it will handle OAuth sign-in
@@ -197,9 +210,7 @@ function changePassword(supabaseClient, newPassword) {
 }
 function deleteAccount(supabaseClient) {
     return __awaiter(this, void 0, void 0, function* () {
-        // This function is not implemented yet, but it will handle account deletion
-        // using the Supabase client.
-        const { error } = yield supabaseClient.auth.admin.deleteUser('5e3ae116-297b-41cd-93a8-a1d55af10f1e'); // replace with actual user ID
+        const { error } = yield supabaseClient.functions.invoke('delete_user');
         if (error) {
             console.error('Error deleting account:', error.message);
             throw error;
@@ -211,8 +222,8 @@ function deleteAccount(supabaseClient) {
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
         const supabaseClient = yield getSupabaseClient();
-        yield createUser("muktharamesh20@gmail.com", "abcabc", supabaseClient);
-        let [token, refreshToken] = yield signInAndGetToken('muktharamesh20@gmail.com', 'abcabc', supabaseClient);
+        //await createUser("muktharamesh20@gmail.com", "abcabc", supabaseClient)
+        let [token, refreshToken] = yield signInAndGetToken('muktharamesh20@gmail.com', 'AthenaWarrior0212*', supabaseClient);
         try {
             [token, refreshToken] = yield useSupaBaseRefreshToken(refreshToken, supabaseClient);
         }
