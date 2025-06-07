@@ -12,8 +12,15 @@ describe('signing_up_users', function () {
     /**
      * Testing strategy:
      *
-     * drawGrid():
-     *      partition on output: blank, drawn
+     * creating categories
+     * when creating a group, a category is automatically created for it
+     * when you leave that group, what happens to the category tags (a private one is
+     * created for your posts, with a setting that links to the old group in case you join
+     * it again)
+     *      rejoining the group after that, regetting the category tag on your posts
+     * having default viewership settigns for each category
+     * analytics on all the categories
+     * 1se, picture a day yearly recaps
      */
     it('a subtest thingy', function () {
     });

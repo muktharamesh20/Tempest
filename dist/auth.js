@@ -13,7 +13,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getSupabaseClient = getSupabaseClient;
-exports.getSupabaseClientWithRolePostgres = getSupabaseClientWithRolePostgres;
 exports.createUser = createUser;
 exports.deleteUser = deleteUser;
 exports.verifyToken = verifyToken;
@@ -45,22 +44,6 @@ function getSupabaseClient() {
         return supabase;
     });
 }
-//create a supabase client with role postgres for testing purposes
-function getSupabaseClientWithRolePostgres() {
-    return __awaiter(this, void 0, void 0, function* () {
-        var _a, _b;
-        const supabase = (0, supabase_js_1.createClient)((_a = process.env.NEXT_PUBLIC_SUPABASE_URL) !== null && _a !== void 0 ? _a : assert_1.default.fail('NEXT_PUBLIC_SUPABASE_URL is not defined'), (_b = process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY) !== null && _b !== void 0 ? _b : assert_1.default.fail('NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY is not defined'), {
-            auth: {
-                flowType: 'pkce',
-                autoRefreshToken: false,
-                persistSession: true,
-                detectSessionInUrl: true
-            }
-        });
-        return supabase;
-    });
-}
-;
 //helper functions to interact with the database
 //--------------------------------------------Authentication Functions--------------------------------------------------//
 function createUser(email, password, supabaseClient) {

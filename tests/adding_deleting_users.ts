@@ -33,6 +33,7 @@ describe('signing_up_users', function () {
      * 
      * manually_approve_tags
      *      partiton on setting: yes, no
+     *      partition on switching with tags in the waiting list: yes, no
      * 
      * change_email()
      *      partition on changed email, no changed email
@@ -41,6 +42,15 @@ describe('signing_up_users', function () {
      *      partition on changed username, not changed username
      *      partition on valid username, not valid username
      * 
+     * reporting_people:
+     *      partition on number of reports, types of reports
+     *      partition on requesting review, how it shows up on our supabase
+     *                    system
+     * 
+     * setting up user_page:
+     *      partition on tab: tags, home page
+     *      partition on categories: make sure it's in correct order, and only
+     *                               the categories you want show up on your home page
      * 
      */
     it('a subtest thingy', async function () {

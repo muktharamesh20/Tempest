@@ -11,8 +11,16 @@ describe('signing_up_users', function () {
     /**
      * Testing strategy:
      *
-     * drawGrid():
-     *      partition on output: blank, drawn
+     * Ownership of vt:
+     *      partition on ownership: group, individual, both, neither
+     *      partition on followers_or_all, followers, all
+     *      partition on friends: close friends, friends, not friends
+     * 
+     * if there's a bunch, and then archive is added
+     *      - I think it should just go to archive actually
+     * if there's a bunch and then public is added
+     * if there are no viewrship tags
+     * 
      */
     it('a subtest thingy', function () {
     });
