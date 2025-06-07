@@ -12,8 +12,8 @@ describe('signing_up_users', function () {
     /**
      * Testing strategy:
      *
-     * drawGrid():
-     *      partition on output: blank, drawn
+     * Default viewership tags:
+     *      partition on group deletion: 
      */
     it('a subtest thingy', function () {
     });

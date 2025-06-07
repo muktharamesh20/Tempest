@@ -17,7 +17,8 @@
     "@types/jsonwebtoken": "^9.0.9",
     "@types/mocha": "^10.0.10",
     "@types/node": "^22.15.21",
-    "mocha": "^11.0.1"
+    "mocha": "^11.0.1",
+    "type-fest": "^4.0.0"
   },
   "mocha": {
     "reporter": "spec",
@@ -36,6 +37,7 @@
     "todos": "tsc && mocha dist/tests/todos.js",
     "viewership_tags": "tsc && mocha dist/tests/viewership_tags.js",
     "scheduling": "tsc && mocha dist/tests/scheduling.js",
-    "test_all": "tsc && mocha dist/tests/**/*.js"
+    "post_suggestion": "tsc && mocha dist/tests/post_suggestion.js",
+    "all": "tsc && mocha dist/tests/**/*.js"
   }
 }

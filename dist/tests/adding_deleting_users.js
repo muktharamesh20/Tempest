@@ -1,5 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+//This file tests modifiying user settings (permissions), different ways of signing in, and what happens when a user
+//is deleted or added.
 describe('signing_up_users', function () {
     /**
      * Testing strategy:

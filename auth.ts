@@ -3,6 +3,7 @@ import { Database } from './databasetypes'
 import assert from 'assert'
 import jwt, { Jwt } from 'jsonwebtoken'
 import dotenv from 'dotenv';
+import { MergeDeep } from 'type-fest'
 
 //allows us to use process.env to get environment variables
 dotenv.config();

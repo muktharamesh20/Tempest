@@ -13,8 +13,8 @@ describe('signing_up_users', function () {
     /**
      * Testing strategy:
      *
-     * drawGrid():
-     *      partition on output: blank, drawn
+     * partition on vts:
+     *      partition on group of friends: all allow you, some don't allow you, none allow you
      */
     it('a subtest thingy', function () {
     });
