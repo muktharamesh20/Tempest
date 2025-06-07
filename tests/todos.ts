@@ -31,6 +31,8 @@ describe('signing_up_users', function () {
      *      can delete assigned todos, but the assignee can still see it
      *      can block people from assigning todos to you
      *      can be inspired by a todo (from a post or friend)
+     *      SECURITY
+     *      NOTIFICATIONS
      */
     it('a subtest thingy', function () {
     });

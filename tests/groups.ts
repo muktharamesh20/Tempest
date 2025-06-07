@@ -20,6 +20,8 @@ describe('signing_up_users', function () {
      *      setting up special events
      *      changing home page based on public or private
      *      changing home page based on categories
+     *      SECURITY
+     *      NOTIFICATIONS
      */
     it('a subtest thingy', function () {
     });

@@ -5,8 +5,10 @@ describe('signing_up_users', function () {
     /**
      * Testing strategy:
      *
-     * drawGrid():
-     *      partition on output: blank, drawn
+     * SECURITY
+     * NOTIFICATIONS
+     *
+     * kanban todos in priority/deadline order
      */
     it('a subtest thingy', function () {
     });

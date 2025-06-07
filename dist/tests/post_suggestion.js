@@ -9,7 +9,12 @@ describe('signing_up_users', function () {
      *      partition on ownership: group, individual, both, neither
      *      partition on followers_or_all, followers, all
      *      partition on friends: close friends, friends, not friends
-
+     *
+     * Things to test:
+     *      already viewed post
+     *      liked similar post
+     *      SECURITY
+     *      BEST NOTIFICATION TO NOTIFY
      *
      */
     it('a subtest thingy', function () {

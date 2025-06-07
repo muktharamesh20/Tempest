@@ -205,7 +205,7 @@ async function main(): Promise<void> {
     const user21 = 'da2b0a4b-ca12-40a2-b6cd-aa08e64493cb';
     const onefinal = 'f4790ec6-eb7f-4190-b778-27909cafa49f';
     const supabase = await getSupabaseClient();
-    let [token, refreshToken, user_id] = await signInAndGetToken('muktharamesh21@gmail.com', 'AthenaWarrior0212*', supabase);
+    let [token, refreshToken, user_id] = await signInAndGetToken('muktharamesh21@gmail.com', 'abcabc', supabase);
     await getViewershipTag(supabase);
     console.log("User id:", user_id);
 

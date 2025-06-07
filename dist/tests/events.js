@@ -6,8 +6,16 @@ describe('signing_up_users', function () {
     /**
      * Testing strategy:
      *
-     * partition on vts:
-     *      partition on group of friends: all allow you, some don't allow you, none allow you
+     * Things to test:
+     *      special event shows up in group
+     *      categories work correctly, whether its group or individual
+     *      when removing/changing a specific day from a recurring event, it is managed properly
+     *      if you don't want it to come from a group, defaults in the group make it not viewable in your calendar for yourself or others
+     *      if you want it private to yourself, defaults in the group make it not viewable to otehers
+     *      inviting people to events
+     *      creating posts from special events in groups, or your own special events
+     *      SECURITY
+     *      NOTIFICATIONS (ie when you invite people)
      */
     it('a subtest thingy', function () {
     });

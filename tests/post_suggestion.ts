@@ -19,6 +19,8 @@ describe('signing_up_users', function () {
      * Things to test:
      *      already viewed post
      *      liked similar post
+     *      SECURITY
+     *      BEST NOTIFICATION TO NOTIFY
      * 
      */
     it('a subtest thingy', function () {

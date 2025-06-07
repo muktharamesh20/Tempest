@@ -191,7 +191,7 @@ function main() {
         const user21 = 'da2b0a4b-ca12-40a2-b6cd-aa08e64493cb';
         const onefinal = 'f4790ec6-eb7f-4190-b778-27909cafa49f';
         const supabase = yield (0, auth_1.getSupabaseClient)();
-        let [token, refreshToken, user_id] = yield (0, auth_1.signInAndGetToken)('muktharamesh21@gmail.com', 'AthenaWarrior0212*', supabase);
+        let [token, refreshToken, user_id] = yield (0, auth_1.signInAndGetToken)('muktharamesh21@gmail.com', 'abcabc', supabase);
         yield getViewershipTag(supabase);
         console.log("User id:", user_id);
         //await createFollowerRequest(user_id, abc, supabase);

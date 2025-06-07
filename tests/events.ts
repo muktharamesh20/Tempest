@@ -21,6 +21,8 @@ describe('signing_up_users', function () {
      *      if you want it private to yourself, defaults in the group make it not viewable to otehers
      *      inviting people to events
      *      creating posts from special events in groups, or your own special events
+     *      SECURITY
+     *      NOTIFICATIONS (ie when you invite people)
      */
     it('a subtest thingy', function () {
     });

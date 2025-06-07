@@ -11,6 +11,8 @@ import {getSupabaseClient, createUser, deleteUser, signInAndGetToken, signOut, u
 describe('signing_up_users', function () {
     /**
      * Testing strategy:
+     * 
+     * SECURITY
      *
      * creating categories
      * when creating a group, a category is automatically created for it

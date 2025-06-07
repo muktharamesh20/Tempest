@@ -14,6 +14,7 @@ import {getSupabaseClient, createUser, deleteUser, signInAndGetToken, signOut, u
 describe('signing_up_users', function () {
     /**
      * Things to test:
+     *      SECURITY
      *      liking a post: owner vs not owner vs not even a follower
      *      commenting on a post
      *      adding a group tag
@@ -36,6 +37,7 @@ describe('signing_up_users', function () {
      *      if the same person tries saving a bunch
      *      retrieving the people who liked the post
      *      putting a post in highlights
+     *      NOTIFICATIONS
      *      
      */
     it('a subtest thingy', function () {

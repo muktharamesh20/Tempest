@@ -14,6 +14,9 @@ import {getSupabaseClient, createUser, deleteUser, signInAndGetToken, signOut, u
 describe('signing_up_users', function () {
     /**
      * Testing strategy:
+     * 
+     * SECURITY
+     * NOTIFICATIONS
      *
      * Changing password:
      *      partition on validity: valid, invalid

@@ -6,8 +6,16 @@ describe('signing_up_users', function () {
     /**
      * Testing strategy:
      *
-     * Default viewership tags:
-     *      partition on group deletion:
+     * Things to check:
+     *      join requests
+     *      invite requests
+     *      above based on roles (ie owner admin general)
+     *      creating todos and events
+     *      setting up special events
+     *      changing home page based on public or private
+     *      changing home page based on categories
+     *      SECURITY
+     *      NOTIFICATIONS
      */
     it('a subtest thingy', function () {
     });

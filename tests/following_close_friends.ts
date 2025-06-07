@@ -17,6 +17,8 @@ describe('signing_up_users', function () {
      *      accepting a follow request
      *      creating a follow request to a public user 
      *      becoming a public user with follow requests piled up (should auto accept them)
+     *      SECURITY
+     *      NOTIFICATIONS
      */
     it('a subtest thingy', function () {
     });
