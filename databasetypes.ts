@@ -379,35 +379,41 @@ export type Database = {
       }
       groups: {
         Row: {
+          admins_change_settings: boolean
           admins_create_events: boolean
           admins_invite: boolean
           admins_un_assign_todos: boolean
           created_at: string | null
+          description: string
           group_id: string
           owner: string
-          profile_picture: string | null
+          profile_picture: string
           public_special_events: boolean
           title: string
         }
         Insert: {
+          admins_change_settings?: boolean
           admins_create_events?: boolean
           admins_invite?: boolean
           admins_un_assign_todos?: boolean
           created_at?: string | null
+          description?: string
           group_id?: string
           owner?: string
-          profile_picture?: string | null
+          profile_picture: string
           public_special_events: boolean
           title: string
         }
         Update: {
+          admins_change_settings?: boolean
           admins_create_events?: boolean
           admins_invite?: boolean
           admins_un_assign_todos?: boolean
           created_at?: string | null
+          description?: string
           group_id?: string
           owner?: string
-          profile_picture?: string | null
+          profile_picture?: string
           public_special_events?: boolean
           title?: string
         }
@@ -1202,8 +1208,16 @@ export type Database = {
         Args: { uid: string }
         Returns: string[]
       }
+      is_admin_or_owner: {
+        Args: { group_id: string }
+        Returns: boolean
+      }
       is_following: {
         Args: { follower: string; followed: string }
+        Returns: boolean
+      }
+      is_in_group: {
+        Args: { group_id: string }
         Returns: boolean
       }
       viewership_tag_allows_viewer: {

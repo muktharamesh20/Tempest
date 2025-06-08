@@ -12,7 +12,7 @@ export type Feed = {forNow: null}
 export type Message = {id: string, content: Text, createdAt: Date, senderId: string}
 export type GroupChat = {name: string, id: string, members: UserList, messages: Message[]};
 export type FrinedChat = {name: string, id: string, members: UserList, messages: Message[]};
-export type Todo = {forNow: null}
+export type Todo = {forNow: null, todoID: TodoId, title: Text, description: Text, dueDate: Date | null, completed: boolean, assignedTo: UserList, createdBy: UserId, groupId: GroupId | null, repeatPeriod: RepeatPeriod, repeatDays: Day[], canModify: boolean, canDelete: boolean};
 export type KanbanBoard = {forNow: null}
 export type Event = {forNow: null, canModify: boolean, canDelete: boolean}
 export type Notification = {forNow: null}
@@ -37,7 +37,9 @@ export type GroupId = string;
 export type EventId = string;
 export type TodoId = string;
 export type CategoryId = string;
-export type Role = 'admin' | 'owner' | 'general'; 
+export type Role = 'admin' | 'owner' | 'general';
+export type RepeatPeriod = 'NONE' | 'Weekly' | 'Monthly' | 'BiWeekly' | 'Daily' | 'Yearly'; 
+export type Day = 'MO' | 'TU' | 'WE' | 'TH' | 'FR' | 'SA' | 'SU';
 
 export async function asyncTimer(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -50,7 +52,7 @@ export class NotImplementedError extends Error {
     }
 }
 
-export function getBatchUsers(userIds: UserId[], supabaseClient: SupabaseClient<Database>): Promise<userList> {
+export function getBatchUsers(userIds: UserId[], supabaseClient: SupabaseClient<Database>): Promise<UserList> {
     throw new NotImplementedError('getBatchUsers');
 }
 

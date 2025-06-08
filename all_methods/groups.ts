@@ -9,6 +9,7 @@ import { create } from 'domain'
 import * as types from './utils.js'
 import { NotImplementedError, getBatchUsers, createGroupTypeWithData } from './utils.js';
 import { group } from 'console'
+import { DateTime } from 'neo4j-driver'
 
 //allows us to use process.env to get environment variables
 dotenv.config();
@@ -56,7 +57,7 @@ export async function deleteGroup(group: types.Group, supabaseClient: SupabaseCl
 /**
  * Fetches the members of a group by its ID.
  * 
- * @param groupId 
+ * @param group 
  * @param supabaseClient 
  * @returns A list of users and their roles in the group.
  */
@@ -188,7 +189,7 @@ export async function acceptJoinRequest(group: types.Group, user: types.User, su
  * Deletes a join request for a group.  Requires that the deleter is a member of the group and has
  * permission to accept and delete join requests, or that the user that created the join request is deleting it.
  * 
- * @param groupId group to delete the join request for
+ * @param group group to delete the join request for
  * @param userId the user whose join request to delete
  * @param supabaseClient the Supabase client to use for the database operations.
  * @throws Will throw an error if the deletion fails, most likely due to permissions.
@@ -209,7 +210,7 @@ export async function deleteJoinRequest(group: types.Group, user: types.User, su
 /**
  * Deletes an invite for a member to join a group.  Requires that the deleter is the user that created the invite.
  * 
- * @param groupId the group to delete the invite for
+ * @param group the group to delete the invite for
  * @param user the member whose invite to delete
  * @param groupMemberId the user that created the invite, the deleter
  * @param supabaseClient the Supabase client to use for the database operations.
@@ -232,12 +233,12 @@ export async function deleteSpecificInvite(group: types.Group, user: types.User,
 /**
  * Deletes all invite for a member to join a specific group.  Requires that the deleter is the user that was invited.
  * 
- * @param groupId the group to delete the invite for
+ * @param group the group to delete the invite for
  * @param deleter the user that is deleting the invite
  * @param supabaseClient the Supabase client to use for the database operations.
  * @throws Will throw an error if the deletion fails, most likely due to permissions.
  */
-export async function deleteAllInvites(group: types.Group, deleter: types.User, supabaseClient: SupabaseClient<Database>): Promise<void> {
+export async function deleteAllInvitesFromGroup(group: types.Group, deleter: types.User, supabaseClient: SupabaseClient<Database>): Promise<void> {
     const { error } = await supabaseClient
         .from('invite_request')
         .delete()
@@ -250,11 +251,19 @@ export async function deleteAllInvites(group: types.Group, deleter: types.User, 
     }
 }
 
-export async function changeGroupName(groupId: string, newName: string, supabaseClient: SupabaseClient<Database>): Promise<void> {
+
+/**
+ * Changes the group name.  Requires the user is the owner of the group or has permission to change the group name.
+ * 
+ * @param group the group whose name you want to change
+ * @param newName New group name
+ * @param supabaseClient the Supabase client to use for the database operations.
+ */
+export async function changeGroupName(group: types.Group, newName: string, supabaseClient: SupabaseClient<Database>): Promise<void> {
     const { error } = await supabaseClient
         .from('groups')
-        .update({ name: newName })
-        .eq('id', groupId);
+        .update({ title: newName })
+        .eq('id', group.group_id);
 
     if (error) {
         console.error('Error changing group name:', error.message);
@@ -262,11 +271,18 @@ export async function changeGroupName(groupId: string, newName: string, supabase
     }
 }
 
-export async function changeGroupDescription(groupId: string, newDescription: string, supabaseClient: SupabaseClient<Database>): Promise<void> {
+/**
+ * Changes the group description.  Requires the user is the owner of the group or has permission to change the group description.  Description must be under 300 characters.
+ * 
+ * @param group The ID of the group whose description you want to change
+ * @param newDescription New group description
+ * @param supabaseClient the Supabase client to use for the database operations.
+ */
+export async function changeGroupDescription(group: types.Group, newDescription: string, supabaseClient: SupabaseClient<Database>): Promise<void> {
     const { error } = await supabaseClient
         .from('groups')
         .update({ description: newDescription })
-        .eq('id', groupId);
+        .eq('id', group.group_id);
 
     if (error) {
         console.error('Error changing group description:', error.message);
@@ -274,34 +290,51 @@ export async function changeGroupDescription(groupId: string, newDescription: st
     }
 }
 
-export async function changeGroupProfilePicture(group: types.Group, newProfilePicture: string, supabaseClient: SupabaseClient<Database>): Promise<void> {
-    const { error } = await supabaseClient
-        .from('groups')
-        .update({ profile_picture: newProfilePicture })
-        .eq('id', group.group_id);
-
-    if (error) {
-        console.error('Error changing group profile picture:', error.message);
-        throw error;
-    }
+/**
+ * Uploads a new profile picture for the group. Requires user is a member of the group and has permission to change the profile picture.
+ * 
+ * @param group the group whose profile picture you want to upload
+ * @param image the image to upload
+ * @param supabaseClient the Supabase client to use for the database operations.
+ */
+export async function changeGroupProfilePicture(group: types.Group, newProfilePicture: types.Image, supabaseClient: SupabaseClient<Database>): Promise<void> {
+    throw new NotImplementedError('changeGroupProfilePicture');
 }
 
+/**
+ * Deletes the profile picture the group. Requires user is a member of the group and has permission to change the profile picture.
+ * 
+ * @param group the group whose profile picture you want to delete
+ * @param supabaseClient the Supabase client to use for the database operations.
+ */
 export async function deleteGroupProfilePicture(group: types.Group, supabaseClient: SupabaseClient<Database>): Promise<void> {
-    const { error } = await supabaseClient
-        .from('groups')
-        .update({ profile_picture: null })
-        .eq('id', group.group_id);
-
-    if (error) {
-        console.error('Error deleting group profile picture:', error.message);
-        throw error;
-    }
+    throw new NotImplementedError('deleteGroupProfilePicture');
 }
 
-export async function createGroupEvent(eventDetails: { title: string; description: string; date: string; group: types.Group }, supabaseClient: SupabaseClient<Database>): Promise<void> {
+/**
+ * Creates a group event with the provided details. Requires user is a member of the group and has permission to create events.  Title must be under 20 characters, description under 300 characters.
+ * 
+ * @param eventDetails the details of the event to create, including title, description, date, and group.
+ * @param supabaseClient the Supabase client to use for the database operations.
+ */
+export async function createGroupEvent(eventDetails: {title: string, description: string, location: string | null, start_time: DateTime, end_time: DateTime, is_all_day: boolean, start_date: Date, end_date: Date, repeat_period: types.RepeatPeriod, repeat_days: types.Day[], end_repeat: Date, special_event: boolean, working_on_todo: types.Todo, group: types.Group}, supabaseClient: SupabaseClient<Database>): Promise<void> {
     const { error } = await supabaseClient
-        .from('group_events')
-        .insert({ ...eventDetails, group_id: eventDetails.group.group_id });
+        .from('event')
+        .insert({title: eventDetails.title,
+                description: eventDetails.description,
+                location: eventDetails.location,
+                start_time: eventDetails.start_time,
+                end_time: eventDetails.end_time,
+                is_all_day: eventDetails.is_all_day,
+                start_date: eventDetails.start_date,
+                end_date: eventDetails.end_date,
+                repeat_period: eventDetails.repeat_period,
+                repeat_days: eventDetails.repeat_days,
+                end_repeat: eventDetails.end_repeat,
+                special_event: eventDetails.special_event,
+                working_on_todo_id: eventDetails.working_on_todo.todo_id,
+                group_id: eventDetails.group.group_id
+        });
 
     if (error) {
         console.error('Error creating group event:', error.message);
@@ -382,11 +415,11 @@ export async function postGroupMessage(group: types.Group, messageDetails: { mes
     }
 }
 
-export async function getGroupFullProfilePage(groupId: string, supabaseClient: SupabaseClient<Database>): Promise<types.GroupHomePage> {
+export async function getGroupFullProfilePage(group: types.Group, supabaseClient: SupabaseClient<Database>): Promise<types.GroupHomePage> {
     const { data, error } = await supabaseClient
         .from('group_profile_page')
         .select('*')
-        .eq('group_id', groupId);
+        .eq('group_id', group.group_id);
 
     if (error) {
         console.error('Error fetching group profile page posts and categories:', error.message);
