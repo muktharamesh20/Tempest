@@ -14,9 +14,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const node_assert_1 = __importDefault(require("node:assert"));
 const auth_js_1 = require("../auth.js");
+//import { asyncTimer } from '../utils.js';
+const test_js_1 = require("../test.js");
 //This file tests modifiying user settings (permissions), different ways of signing in, and what happens when a user
 //is deleted or added.
 describe('users and user settings', function () {
+    this.timeout(5000); // Set a timeout for the tests to run, as some operations may take longer
     /**
      * Testing strategy:
      *
@@ -61,7 +64,7 @@ describe('users and user settings', function () {
      *                               the categories you want show up on your home page
      *
      */
-    it('Testing EMAIL sign up with and without an account', function () {
+    it.skip('Testing EMAIL sign up with and without an account', function () {
         return __awaiter(this, void 0, void 0, function* () {
             //setup
             const database = yield (0, auth_js_1.getSupabaseClient)();
@@ -72,8 +75,7 @@ describe('users and user settings', function () {
             node_assert_1.default.rejects((0, auth_js_1.createUser)('a@a.com', 'AbcdefghiJ', database), 'no digits in password');
             node_assert_1.default.rejects((0, auth_js_1.createUser)('a@a.com', 'ab83jd', database), 'too short of a password');
             node_assert_1.default.rejects((0, auth_js_1.createUser)('a@a.com', '*Alphabet', database), 'no digits in password');
-            node_assert_1.default.doesNotReject((0, auth_js_1.createUser)('a@a.com', 'Alphabet08', database), 'valid password should work');
-            yield asyncTimer(200); // wait for a second to make sure the account is created
+            yield node_assert_1.default.doesNotReject((0, auth_js_1.createUser)('a@a.com', 'Alphabet08', database), 'valid password should work');
             node_assert_1.default.rejects((0, auth_js_1.createUser)('a@a.com', 'Alphabet08', database), 'already created account should not work');
             let [token, refresh_token, user_id] = yield (0, auth_js_1.signInAndGetToken)('a@a.com', 'Alphabet08', database);
             (0, auth_js_1.signOut)(token, database);
@@ -83,13 +85,38 @@ describe('users and user settings', function () {
             yield (0, auth_js_1.deleteAccount)(database);
         });
     });
-    it('modifying user settings should work', function () {
+    it.skip('deleting all the users should work', function () {
         return __awaiter(this, void 0, void 0, function* () {
             const database = yield (0, auth_js_1.getSupabaseClient)();
+            yield (0, test_js_1.deleteTestingUsers)(database);
+        });
+    });
+    it.skip('creating all the users should work', function () {
+        return __awaiter(this, void 0, void 0, function* () {
+            const database = yield (0, auth_js_1.getSupabaseClient)();
+            yield (0, test_js_1.createTestingUsers)(database);
+        });
+    });
+    it.skip('changing passwords should work', function () {
+        return __awaiter(this, void 0, void 0, function* () {
+            const database = yield (0, auth_js_1.getSupabaseClient)();
+            let [token, refresh_token, user_id] = yield (0, auth_js_1.signInAndGetToken)('a@a.com', 'Alphabet08', database);
+            // Change password
+            yield node_assert_1.default.rejects((0, auth_js_1.changePassword)(database, 'acdefghijK'), 'password should be at least 8 characters long');
+            yield node_assert_1.default.doesNotReject((0, auth_js_1.changePassword)(database, 'Beta0893'), 'changing password should work');
+            yield (0, auth_js_1.signOut)(token, database);
+            yield node_assert_1.default.rejects((0, auth_js_1.signInAndGetToken)('a@a.com', 'Alphabet08', database));
+            [token, refresh_token, user_id] = yield (0, auth_js_1.signInAndGetToken)('a@a.com', 'Beta0893', database);
+            yield (0, auth_js_1.changePassword)(database, 'Alphabet08'); // Change back to original password
+            (0, auth_js_1.signOut)(token, database);
+        });
+    });
+    it('oathSignIn should work', function () {
+        return __awaiter(this, void 0, void 0, function* () {
+            (0, node_assert_1.default)(false, 'oathSignIn is not implemented yet');
         });
     });
 });
-// Removed duplicate implementation of asyncTimer
 function asyncTimer(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }

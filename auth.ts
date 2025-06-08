@@ -192,6 +192,16 @@ export async function oathSignIn(supabaseClient: SupabaseClient<Database>): Prom
 }
 
 export async function changePassword(supabaseClient: SupabaseClient<Database>, newPassword: string): Promise<void> {
+    const { data, error } = await supabaseClient.auth.updateUser({
+        password: newPassword,
+    });
+
+    if (error) {
+        console.error('Error changing password:', error.message);
+        throw error;
+    }
+
+    console.log('Password changed successfully:', data.user.email);
 }
 
 export async function deleteAccount(supabaseClient: SupabaseClient<Database>): Promise<void> {

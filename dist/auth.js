@@ -206,6 +206,14 @@ function oathSignIn(supabaseClient) {
 }
 function changePassword(supabaseClient, newPassword) {
     return __awaiter(this, void 0, void 0, function* () {
+        const { data, error } = yield supabaseClient.auth.updateUser({
+            password: newPassword,
+        });
+        if (error) {
+            console.error('Error changing password:', error.message);
+            throw error;
+        }
+        console.log('Password changed successfully:', data.user.email);
     });
 }
 function deleteAccount(supabaseClient) {

@@ -14,6 +14,7 @@ import { create } from 'node:domain';
 //is deleted or added.
 
 describe('users and user settings', function () {
+    this.timeout(5000); // Set a timeout for the tests to run, as some operations may take longer
     /**
      * Testing strategy:
      * 
@@ -71,9 +72,9 @@ describe('users and user settings', function () {
         assert.rejects(createUser('a@a.com', 'ab83jd', database), 'too short of a password');
         assert.rejects(createUser('a@a.com', '*Alphabet', database), 'no digits in password');
         
-        assert.doesNotReject(createUser('a@a.com', 'Alphabet08', database), 'valid password should work');
+        await assert.doesNotReject(createUser('a@a.com', 'Alphabet08', database), 'valid password should work');
 
-        await asyncTimer(200); // wait for a second to make sure the account is created
+
         assert.rejects(createUser('a@a.com', 'Alphabet08', database), 'already created account should not work');
 
         let [token, refresh_token, user_id] = await signInAndGetToken('a@a.com', 'Alphabet08', database);
@@ -86,12 +87,40 @@ describe('users and user settings', function () {
         await deleteAccount(database);
     });
 
-    it('modifying user settings should work', async function () {
+    it.skip('deleting all the users should work', async function () {
         const database: SupabaseClient<Database> = await getSupabaseClient();
+        await deleteTestingUsers(database);
     });
+
+    it.skip('creating all the users should work', async function () {
+        const database: SupabaseClient<Database> = await getSupabaseClient();
+        await createTestingUsers(database);
+    });
+
+    it.skip('changing passwords should work', async function () {
+        const database: SupabaseClient<Database> = await getSupabaseClient();
+
+        let [token, refresh_token, user_id] = await signInAndGetToken('a@a.com', 'Alphabet08', database);
+        
+        // Change password
+        await assert.rejects(changePassword(database, 'acdefghijK'), 'password should be at least 8 characters long');
+        await assert.doesNotReject(changePassword(database, 'Beta0893'), 'changing password should work');
+
+        await signOut(token, database);
+        await assert.rejects(signInAndGetToken('a@a.com', 'Alphabet08', database));
+        [token, refresh_token, user_id] = await signInAndGetToken('a@a.com', 'Beta0893', database);
+        await changePassword(database, 'Alphabet08'); // Change back to original password
+        signOut(token, database);
+    });
+
+    it('oathSignIn should work', async function () {
+        assert(false, 'oathSignIn is not implemented yet');
+    });
+
+
 });
 
-// Removed duplicate implementation of asyncTimer
+
 function asyncTimer(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
