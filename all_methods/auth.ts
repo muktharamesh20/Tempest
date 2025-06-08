@@ -1,5 +1,5 @@
 import { AuthSessionMissingError, createClient,  JwtPayload, SupabaseClient } from '@supabase/supabase-js'
-import { Database } from './databasetypes'
+import { Database } from '../databasetypes'
 import assert from 'assert'
 import jwt, { Jwt } from 'jsonwebtoken'
 import dotenv from 'dotenv';
@@ -23,10 +23,6 @@ export async function getSupabaseClient(): Promise<SupabaseClient<Database>> {
   return supabase;
 }
 
-//helper functions to interact with the database
-
-
-//--------------------------------------------Authentication Functions--------------------------------------------------//
 /**
  * 
  * @param email email of the user to create
@@ -164,91 +160,6 @@ export async function useSupaBaseRefreshToken(refreshToken: string, supabaseClie
   return [accessToken, newRefreshToken];
 }
 
-export async function changeUsername(newUsername: string, userId: string, supabaseClient: SupabaseClient<Database>): Promise<void> {
-    const { data, error } = await supabaseClient
-        .from('usersettings') 
-        .update({ username: newUsername }) 
-        .eq('id', userId); 
-
-    if (error) {
-        console.error('Error changing username:', error.message);
-        throw error;
-    }
-}
-
-export async function changeFirstName(name: string, userId: string, supabaseClient: SupabaseClient<Database>): Promise<void> {
-  const { data, error } = await supabaseClient
-      .from('usersettings') 
-      .update({ first_name: name }) 
-      .eq('id', userId); 
-
-  if (error) {
-      console.error('Error changing first name:', error.message);
-      throw error;
-  }
-}
-
-export async function changeLastName(name: string, userId: string, supabaseClient: SupabaseClient<Database>): Promise<void> {
-  const { data, error } = await supabaseClient
-      .from('usersettings') 
-      .update({ last_name: name }) 
-      .eq('id', userId); 
-
-  if (error) {
-      console.error('Error changing last name:', error.message);
-      throw error;
-  }
-}
-
-export async function changeMiddleName(name: string, userId: string, supabaseClient: SupabaseClient<Database>): Promise<void> {
-  const { data, error } = await supabaseClient
-      .from('usersettings') 
-      .update({ middle_name: name }) 
-      .eq('id', userId); 
-
-  if (error) {
-      console.error('Error changing middle name:', error.message);
-      throw error;
-  }
-}
-
-export async function changePublicOrPrivate(public_or_private: 'public' | 'private', userId: string, supabaseClient: SupabaseClient<Database>): Promise<void> {
-  const { data, error } = await supabaseClient
-      .from('usersettings') 
-      .update({ public_or_private: public_or_private }) 
-      .eq('id', userId); 
-
-  if (error) {
-      console.error('Error changing public or private name:', error.message);
-      throw error;
-  }
-}
-
-export async function changeBio(newBio: string, userId: string, supabaseClient: SupabaseClient<Database>): Promise<void> {
-  const { data, error } = await supabaseClient
-      .from('usersettings') 
-      .update({ bio: newBio }) 
-      .eq('id', userId); 
-
-  if (error) {
-      console.error('Error changing bio:', error.message);
-      throw error;
-  }
-}
-
-export async function change_password(supabaseClient: SupabaseClient<Database>, newPassword: string): Promise<void> {
-    // This function is not implemented yet, but it will handle password change
-    // using the Supabase client.
-    const { error } = await supabaseClient.auth.updateUser({
-        password: newPassword,
-    });
-
-    if (error) {
-        console.error('Error changing password:', error.message);
-        throw error;
-    }
-    console.log('Password changed successfully');
-}
 
 export async function oathSignIn(supabaseClient: SupabaseClient<Database>): Promise<[string, string]> {
     // This function is not implemented yet, but it will handle OAuth sign-in
@@ -284,26 +195,3 @@ export async function deleteAccount(supabaseClient: SupabaseClient<Database>): P
     }
     console.log('Account deleted successfully');
 }
-
-//--------------------------------------------Main Function--------------------------------------------------//
-async function main(): Promise<void> {
-    const supabaseClient = await getSupabaseClient();
-    //await createUser("muktharamesh20@gmail.com", "abcabc", supabaseClient)
-    let [token, refreshToken] = await signInAndGetToken('muktharamesh20@gmail.com', 'AthenaWarrior0212*', supabaseClient);
-    try {
-        [token, refreshToken] = await useSupaBaseRefreshToken(refreshToken, supabaseClient);
-    } catch (error) {
-        console.error('Error refreshing token:', error);
-        //throw error; // Re-throw the error or handle it appropriately
-    }
-    console.log(jwt.decode(token, { complete: true }))
-    console.log(await verifyToken(token));
-
-    try {
-        await signOut(token, supabaseClient, 'global');
-    } catch (error) {
-        console.error('Error signing out:', error);
-    }
-}
-
-//main()

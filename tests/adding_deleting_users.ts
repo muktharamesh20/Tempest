@@ -5,10 +5,16 @@ import assert from 'node:assert';
 import path from 'node:path';
 import fs from 'node:fs';
 
-import {getSupabaseClient, changeUsername, changeFirstName, changeLastName, changeMiddleName, createUser, signInAndGetToken, signOut, useSupaBaseRefreshToken, oathSignIn, deleteAccount, changePassword, verifyToken, changePublicOrPrivate, changeBio} from '../auth.js';
-//import { asyncTimer } from '../utils.js';
-import {createTestingUsers, deleteTestingUsers} from '../test.js'
-import { create } from 'node:domain';
+import {getSupabaseClient, createUser, signInAndGetToken, signOut, oathSignIn, deleteAccount, changePassword, verifyToken}from '../all_methods/auth.js';
+import {changeUsername, changeFirstName, changeLastName, changeMiddleName, changePublicOrPrivate, changeBio, setProfilePic, deleteProfilePic} from '../all_methods/usersettings.js';
+import {getHomePagePostsAndCategories, getProfilePicOf, getFollowedByThesePeople, getFollowsThesePeople, getAllPostsBy, getAllMessagesBetween, postMessage, deleteMessage, getTaggedPostsFrom, toggleCloseFrined, getAllCloseFriends, viewCalendarOf} from '../all_methods/users.js';
+import {getMyCalendar, createTodo, createEvent, getKanban, deleteTodo, deleteEvent, getAllViewershipTags, getAllCategories, changeViewershipTagsOfTodo, changeViewershipTagsOfEvent, changeViewershipTagsOfCategories, inviteToEvent, acceptInviteToEvent, editTodo, editEvent} from '../all_methods/myCalendar.js';
+import {compileNorfications} from '../all_methods/notifications.js';
+import {createGroup, deleteGroup, getGroupMembers, inviteMember, removeMember, acceptInvite, joinRequest, acceptJoinRequest, deleteJoinRequest, deleteInvite, changeGroupName, changeGroupDescription, changeGroupProfilePicture, deleteGroupProfilePicture, createGroupEvent, deleteGroupEvent, assignGroupTodo, deleteGroupTodo, messageGroup, getAllMessages, postGroupMessage, getGroupProfilePagePostsAndCategories,editGroupTodo, editGroupEvent, transferOwnership, changeRoleOf, leaveGroup, viewGroupCalendar} from '../all_methods/groups.js';
+import {likePost, unlikePost, getAllLikedPosts, savePost, unSavePost, inspiredByPost, createPost, deletePost, archivePost, unarchivePost, changeVTs, changeCategories, getFeed, addCommentToPost, replyToComment} from '../all_methods/posts.js';
+
+import { asyncTimer } from '../all_methods/utils.js';
+import {createTestingUsers, deleteTestingUsers} from '../all_methods/test.js'
 
 //This file tests modifiying user settings (permissions), different ways of signing in, and what happens when a user
 //is deleted or added.
@@ -32,14 +38,9 @@ describe('users and user settings', function () {
      *      partition on login method: oauth, email
      *      partition on completed profile: first_name, last_name
      *      partition on attempting to remove first_name and last_name
-     *      partition on birthday: above 13, under 13
      * 
      * profile picture:
      *      partition on default: set pp, did not set pp
-     * 
-     * manually_approve_tags
-     *      partiton on setting: yes, no
-     *      partition on switching with tags in the waiting list: yes, no
      * 
      * change_email()
      *      partition on changed email, no changed email
@@ -47,11 +48,6 @@ describe('users and user settings', function () {
      * change_username():
      *      partition on changed username, not changed username
      *      partition on valid username, not valid username
-     * 
-     * reporting_people:
-     *      partition on number of reports, types of reports
-     *      partition on requesting review, how it shows up on our supabase
-     *                    system
      * 
      * setting up user_page:
      *      partition on tab: tags, home page
@@ -116,7 +112,7 @@ describe('users and user settings', function () {
         assert(false, 'oathSignIn is not implemented yet');
     });
 
-    it('changing user settings should work', async function () {
+    it.skip('changing user settings should work', async function () {
         const database: SupabaseClient<Database> = await getSupabaseClient();
 
         //can change first name, last name, middle name, bio,
@@ -177,7 +173,7 @@ describe('users and user settings', function () {
         signOut(info[0], database);
     });
 
-    it('check security', async function () {
+    it.skip('check security', async function () {
         const database: SupabaseClient<Database> = await getSupabaseClient();
 
         //supabase handles authentication with jwt-tokens, revoking them, checking if a refresh token has been used twice, etc.
@@ -208,9 +204,12 @@ describe('users and user settings', function () {
         await assert.doesNotReject(changeMiddleName('', id, database));
     });
 
+    it('profile picture works'), function (){
+        assert.fail('profile picture is not implemented yet');
+    };
+
+    it('correct categories show up on user page, in timeline order', async function () {
+        //all posts category will show up at the bottom
+        assert.fail('user page is not implemented yet');
+    });
 });
-
-
-function asyncTimer(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}

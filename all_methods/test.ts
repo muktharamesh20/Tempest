@@ -1,6 +1,6 @@
 import {createClient, SupabaseClient} from '@supabase/supabase-js'
 import { QueryResult, QueryData, QueryError } from '@supabase/supabase-js'
-import { Database, Tables, Enums } from './databasetypes'
+import { Database, Tables, Enums } from '../databasetypes'
 import {signInAndGetToken, signOut, getSupabaseClient, decodeToken, createUser, deleteAccount} from './auth'
 import assert from 'assert'
 import dotenv from 'dotenv';
@@ -64,33 +64,6 @@ async function getViewershipTag(supabaseClient: SupabaseClient<Database>): Promi
     console.log('Viewership tag data:', data);
 }
 
-async function getFollowingListID( userId: string, supabaseClient: SupabaseClient<Database>): Promise<string[]> {
-    const { data, error } = await supabaseClient
-        .from('people_to_following')
-        .select('followed_id')
-        .eq('follower_id', userId);
-
-    if (error) {
-        console.error('Error fetching followers:', error.message);
-        throw error;
-    }
-
-    return(data.map((following) => following.followed_id));
-}
-
-async function getFollowerListID( userId: string, supabaseClient: SupabaseClient<Database>): Promise<string[]> {
-    const { data, error } = await supabaseClient
-        .from('people_to_following')
-        .select('follower_id')
-        .eq('followed_id', userId);
-
-    if (error) {
-        console.error('Error fetching followers:', error.message);
-        throw error;
-    }
-
-    return(data.map((following) => following.follower_id));
-}
 
 async function getFollowerListUserName( userId: string, supabaseClient: SupabaseClient<Database>): Promise<string[]> {
     const { data, error } = await supabaseClient

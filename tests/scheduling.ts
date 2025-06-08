@@ -3,7 +3,7 @@ import assert from 'node:assert';
 import path from 'node:path';
 import fs from 'node:fs';
 
-import {getSupabaseClient, createUser, signInAndGetToken, signOut, useSupaBaseRefreshToken, oathSignIn, deleteAccount, changePassword} from '../auth.js';
+import {getSupabaseClient, createUser, signInAndGetToken, signOut, useSupaBaseRefreshToken, oathSignIn, deleteAccount, changePassword} from '../all_methods/auth.js';
 
 // This file tests the scheduling functionality.  This is the AI and productivity part where it will suggest when to work and stuff.  It will also keep track of when you work, and how long you work for, and will suggest when to take breaks, and when to work on different tasks.  It will also suggest when to do different tasks based on your schedule, and will help you manage your time better.
 

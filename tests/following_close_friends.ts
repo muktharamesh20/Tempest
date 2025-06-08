@@ -3,7 +3,7 @@ import assert from 'node:assert';
 import path from 'node:path';
 import fs from 'node:fs';
 
-import {getSupabaseClient, createUser, signInAndGetToken, signOut, useSupaBaseRefreshToken, oathSignIn, deleteAccount, changePassword} from '../auth.js';
+import {getSupabaseClient, createUser, signInAndGetToken, signOut, useSupaBaseRefreshToken, oathSignIn, deleteAccount, changePassword} from '../all_methods/auth.js';
 
 // This file tests following followers and close friends, and whether the following functionality works correctly.
 
