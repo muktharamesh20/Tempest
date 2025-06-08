@@ -6,6 +6,7 @@ import assert from 'assert'
 import dotenv from 'dotenv';
 import { get } from 'http'
 import { create } from 'domain'
+import * as types from './utils.js'
 
 //allows us to use process.env to get environment variables
 dotenv.config();
@@ -107,90 +108,6 @@ async function getPostsFromUser(userId: string, supabaseClient: SupabaseClient<D
 
     console.log('Posts data:', data.map(post => (post.title)));
     return data.map(post => (post.id));
-}
-
-//-----------------------------------------------------------------------------------------------------------//
-async function acceptFollowerRequest(requester_id: string, my_id:string, supabaseClient: SupabaseClient<Database>): Promise<void> {
-    const { data, error } = await supabaseClient
-        .from('people_to_following')
-        .insert({ follower_id: requester_id, followed_id: my_id });
-
-    if (error) {
-        console.error('Error accepting follower request:', error.message);
-        throw error;
-    }
-
-    console.log('Follower request accepted:', data);
-}
-
-async function rejectOrRevokeFollowerRequest(requester_id: string, followed_id:string, supabaseClient: SupabaseClient<Database>): Promise<void> {
-    const { data, error } = await supabaseClient
-        .from('follow_request')
-        .delete()
-        .match({ requester: requester_id, followed_id: followed_id });
-
-    if (error) {
-        console.error('Error rejecting follower request:', error.message);
-        throw error;
-    }
-
-    console.log('Follower request rejected:', data);
-}
-
-async function createFollowerRequest(my_id:string, follower_id: string, supabaseClient: SupabaseClient<Database>): Promise<void> {
-    const { data, error } = await supabaseClient
-        .from('follow_request')
-        .insert({ requester: my_id, followed_id: follower_id });
-
-    if (error) {
-        console.error('Error creating follower request:', error.message);
-        throw error;
-    }
-
-    console.log('Follower request created:', data);
-}
-
-//--------------------------------------------Group stuff---------------------------------------------------//
-async function createGroup(groupName: string, userId: string, supabaseClient: SupabaseClient<Database>): Promise<void> {
-    //const { data, error } = await supabaseClient
-      //  .from('group')
-        //.insert({ name: groupName, owner_id: userId });
-    throw new Error('Not implemented yet');
-
-    //if (error) {
-    //    console.error('Error creating group:', error.message);
-    //    throw error;
-    //}
-
-    //console.log('Group created:', data);
-}
-
-async function transferOwnership(groupId: string, newOwnerId: string, supabaseClient: SupabaseClient<Database>): Promise<void> {
-    //must only change one person's role to "owner"... you will automatically transform into a general member
-}
-
-async function changeOwnership(groupId: string, newOwnerId: string, newRole: 'admin' | 'general', supabaseClient: SupabaseClient<Database>): Promise<void> {
-}
-
-async function requestJoinGroup(groupId: string, userId: string, supabaseClient: SupabaseClient<Database>): Promise<void> {
-}
-
-async function inviteMemberToGroup(groupId: string, userId: string, supabaseClient: SupabaseClient<Database>): Promise<void> {
-}
-
-async function acceptGroupInvite(groupId: string, userId: string, supabaseClient: SupabaseClient<Database>): Promise<void> {
-    //Must create a join request
-}
-
-async function rejectGroupInvite(groupId: string, userId: string, supabaseClient: SupabaseClient<Database>): Promise<void> {
-    //Must delete the invite request
-}
-
-async function rejectJoinRequest(groupId: string, userId: string, supabaseClient: SupabaseClient<Database>): Promise<void> {
-    // Must delete the join request
-}
-
-async function deleteGroup(groupId: string, supabaseClient: SupabaseClient<Database>): Promise<void> {
 }
 
 

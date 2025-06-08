@@ -4,6 +4,7 @@ import assert from 'assert'
 import jwt, { Jwt } from 'jsonwebtoken'
 import dotenv from 'dotenv';
 import { MergeDeep } from 'type-fest'
+import * as types from './utils.js'
 
 //allows us to use process.env to get environment variables
 dotenv.config();
@@ -42,7 +43,7 @@ export async function createUser(email: string, password: string, supabaseClient
         throw error;
     }
 
-    console.log('User created successfully:', email);
+    //console.log('User created successfully:', email);
 }
 
 /**
@@ -100,7 +101,7 @@ export async function signInAndGetToken(email: string, password: string, supabas
   //console.log('✅ Access Token:', accessToken)
   //console.log('🔁 Refresh Token:', refreshToken)
   //console.log(data.session)
-  console.log('✅ signed in', email);
+  //console.log('✅ signed in', email);
 
   return [accessToken, refreshToken, data.session.user.id];
 }
@@ -130,7 +131,7 @@ export async function signOut(token: string, supabaseClient: SupabaseClient<Data
     //throw error
   //}
 
-  console.log('✅ Successfully signed out')
+  //console.log('✅ Successfully signed out')
 }
 
 /**
@@ -184,7 +185,7 @@ export async function changePassword(supabaseClient: SupabaseClient<Database>, n
         throw error;
     }
 
-    console.log('Password changed successfully:', data.user.email);
+    //console.log('Password changed successfully:', data.user.email);
 }
 
 export async function deleteAccount(supabaseClient: SupabaseClient<Database>): Promise<void> {
@@ -193,5 +194,5 @@ export async function deleteAccount(supabaseClient: SupabaseClient<Database>): P
         console.error('Error deleting account:', error.message);
         throw error;
     }
-    console.log('Account deleted successfully');
+    //console.log('Account deleted successfully');
 }

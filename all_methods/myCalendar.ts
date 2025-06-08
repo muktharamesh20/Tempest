@@ -6,16 +6,10 @@ import assert from 'assert'
 import dotenv from 'dotenv';
 import { get } from 'http'
 import { create } from 'domain'
+import * as types from './utils.js'
 
 //allows us to use process.env to get environment variables
 dotenv.config();
-
-class NotImplementedError extends Error {
-    constructor(functionName: string) {
-        super(`${functionName} is not implemented.`);
-        this.name = 'NotImplementedError';
-    }
-}
 
 export async function getMyCalendar(userId: string, supabaseClient: SupabaseClient<Database>): Promise<any[]> {
     const { data, error } = await supabaseClient

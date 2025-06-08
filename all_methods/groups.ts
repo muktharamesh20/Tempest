@@ -6,26 +6,46 @@ import assert from 'assert'
 import dotenv from 'dotenv';
 import { get } from 'http'
 import { create } from 'domain'
+import * as types from './utils.js'
+import { NotImplementedError, getBatchUsers, createGroupTypeWithData } from './utils.js';
+import { group } from 'console'
 
 //allows us to use process.env to get environment variables
 dotenv.config();
 
-export async function createGroup(groupDetails: { name: string; description: string; profilePicture: string; ownerId: string }, supabaseClient: SupabaseClient<Database>): Promise<void> {
-    const { error } = await supabaseClient
+/**
+ * Creates a new group with the provided details, and returns the group's home page.
+ * 
+ * @param groupDetails 
+ * @param supabaseClient 
+ * @return A promise that resolves to the created group's home page.
+ */
+export async function createGroup(groupDetails: { name: string; description: types.Text; profilePicture: types.ProfilePicture | types.DefaultProfilePicture, public_special_events: boolean, title: string }, supabaseClient: SupabaseClient<Database>): Promise<types.GroupHomePage> {
+    const { data, error } = await supabaseClient
         .from('groups')
-        .insert(groupDetails);
+        .insert(groupDetails)
+        .select('group_id');
 
     if (error) {
         console.error('Error creating group:', error.message);
         throw error;
     }
+    
+    return getGroupFullProfilePage(data[0].group_id, supabaseClient);
 }
 
-export async function deleteGroup(groupId: string, supabaseClient: SupabaseClient<Database>): Promise<void> {
+/**
+ * Deletes a group by its ID.  User must be the owner to delete the group.
+ * 
+ * @param group the group to delete 
+ * @param supabaseClient
+ * @throws Will throw an error if the deletion fails.
+ */
+export async function deleteGroup(group: types.Group, supabaseClient: SupabaseClient<Database>): Promise<void> {
     const { error } = await supabaseClient
         .from('groups')
         .delete()
-        .eq('id', groupId);
+        .eq('group_id', group.group_id);
 
     if (error) {
         console.error('Error deleting group:', error.message);
@@ -33,24 +53,53 @@ export async function deleteGroup(groupId: string, supabaseClient: SupabaseClien
     }
 }
 
-export async function getGroupMembers(groupId: string, supabaseClient: SupabaseClient<Database>): Promise<any[]> {
+/**
+ * Fetches the members of a group by its ID.
+ * 
+ * @param groupId 
+ * @param supabaseClient 
+ * @returns A list of users and their roles in the group.
+ */
+export async function getGroupMembers(group: types.Group, supabaseClient: SupabaseClient<Database>): Promise<types.GroupUserList> {
     const { data, error } = await supabaseClient
-        .from('group_members')
+        .from('people_to_group')
         .select('*')
-        .eq('group_id', groupId);
+        .eq('group_id', group.group_id);
 
     if (error) {
         console.error('Error fetching group members:', error.message);
         throw error;
     }
 
-    return data;
+    const peopleIds: types.UserId[] = [];
+    const roles: types.Role[] = [];
+
+    for(const member of data) {
+        peopleIds.push(member.person_id as types.UserId);
+        roles.push(member.role as types.Role);
+    }
+
+    const result = [];
+    const userList = await getBatchUsers(peopleIds, supabaseClient);
+    for (let i = 0; i < userList.length; i++) {
+        result.push({user: userList[i], role: roles[i], group: group});
+    }
+
+    return result;
 }
 
-export async function inviteMember(groupId: string, memberId: string, supabaseClient: SupabaseClient<Database>): Promise<void> {
+/**
+ * Creates an invite for a member to join a group. You must be have permission to invite members to the group,
+ * must be in the group, and the member must not already be in the group.
+ * 
+ * @param group tthe group to invite the member to.
+ * @param member the member to invite.
+ * @param supabaseClient the Supabase client to use for the database operations.
+ */
+export async function inviteMember(group: types.Group, member: types.User, supabaseClient: SupabaseClient<Database>): Promise<void> {
     const { error } = await supabaseClient
-        .from('group_invites')
-        .insert({ group_id: groupId, member_id: memberId });
+        .from('invite_request')
+        .insert({ group_id: group.group_id, user_to_invite: member.user_id });
 
     if (error) {
         console.error('Error inviting member:', error.message);
@@ -58,25 +107,39 @@ export async function inviteMember(groupId: string, memberId: string, supabaseCl
     }
 }
 
-export async function removeMember(groupId: string, memberId: string, supabaseClient: SupabaseClient<Database>): Promise<void> {
+/**
+ * Removes a member from a group. You must be removing yourself, be an admin removing a genral member, 
+ * or be the owner of the group and removing anyone except yourself (you must transfer ownership or delete
+ * the group first).
+ * 
+ * @param group the group from which to remove the member. 
+ * @param memberId the member to remove
+ * @param supabaseClient 
+ */
+export async function removeMember(group: types.Group, member: types.User, supabaseClient: SupabaseClient<Database>): Promise<void> {
     const { error } = await supabaseClient
-        .from('group_members')
+        .from('people_to_group')
         .delete()
-        .eq('group_id', groupId)
-        .eq('member_id', memberId);
+        .eq('group_id', group.group_id)
+        .eq('member_id', member.user_id);
 
     if (error) {
         console.error('Error removing member:', error.message);
-        throw error;
+        throw new Error('Incorrect permissions');
     }
 }
 
-export async function acceptInvite(groupId: string, memberId: string, supabaseClient: SupabaseClient<Database>): Promise<void> {
+/**
+ * When invited to a group, this function is called to accept the invite. Must be called by the invited
+ * member, and the member must not already be in the group.  If no invitation exists, a join request will be created instead.
+ * 
+ * @param group the group to join
+ * @param supabaseClient 
+ */
+export async function acceptInvite(group: types.Group, supabaseClient: SupabaseClient<Database>): Promise<void> {
     const { error } = await supabaseClient
-        .from('group_invites')
-        .update({ accepted: true })
-        .eq('group_id', groupId)
-        .eq('member_id', memberId);
+        .from('join_request')
+        .insert({ group_id: group.group_id });
 
     if (error) {
         console.error('Error accepting invite:', error.message);
@@ -84,10 +147,16 @@ export async function acceptInvite(groupId: string, memberId: string, supabaseCl
     }
 }
 
-export async function joinRequest(groupId: string, userId: string, supabaseClient: SupabaseClient<Database>): Promise<void> {
+/**
+ * Creates a join request to join a group.  
+ * 
+ * @param group the group to join
+ * @param supabaseClient 
+ */
+export async function joinRequest(group: types.Group, user: types.User, supabaseClient: SupabaseClient<Database>): Promise<void> {
     const { error } = await supabaseClient
-        .from('group_join_requests')
-        .insert({ group_id: groupId, user_id: userId });
+        .from('join_request')
+        .insert({ group_id: group.group_id });
 
     if (error) {
         console.error('Error creating join request:', error.message);
@@ -95,12 +164,19 @@ export async function joinRequest(groupId: string, userId: string, supabaseClien
     }
 }
 
-export async function acceptJoinRequest(groupId: string, userId: string, supabaseClient: SupabaseClient<Database>): Promise<void> {
+/**
+ * Accepts a join request for a group.  Requires that the accepter is a member of the group and has
+ * permission to accept join requests.  The user must not already be in the group, and must have already created
+ * a join request.
+ * 
+ * @param group the group to accept the join request for
+ * @param user the user you are accepting
+ * @param supabaseClient 
+ */
+export async function acceptJoinRequest(group: types.Group, user: types.User, supabaseClient: SupabaseClient<Database>): Promise<void> {
     const { error } = await supabaseClient
-        .from('group_join_requests')
-        .update({ accepted: true })
-        .eq('group_id', groupId)
-        .eq('user_id', userId);
+        .from('invite_request')
+        .update({ group_id: group.group_id, user_to_invite: user.user_id })
 
     if (error) {
         console.error('Error accepting join request:', error.message);
@@ -108,12 +184,21 @@ export async function acceptJoinRequest(groupId: string, userId: string, supabas
     }
 }
 
-export async function deleteJoinRequest(groupId: string, userId: string, supabaseClient: SupabaseClient<Database>): Promise<void> {
+/**
+ * Deletes a join request for a group.  Requires that the deleter is a member of the group and has
+ * permission to accept and delete join requests, or that the user that created the join request is deleting it.
+ * 
+ * @param groupId group to delete the join request for
+ * @param userId the user whose join request to delete
+ * @param supabaseClient the Supabase client to use for the database operations.
+ * @throws Will throw an error if the deletion fails, most likely due to permissions.
+ */
+export async function deleteJoinRequest(group: types.Group, user: types.User, supabaseClient: SupabaseClient<Database>): Promise<void> {
     const { error } = await supabaseClient
-        .from('group_join_requests')
+        .from('join_request')
         .delete()
-        .eq('group_id', groupId)
-        .eq('user_id', userId);
+        .eq('group_id', group.group_id)
+        .eq('person_id', user.user_id);
 
     if (error) {
         console.error('Error deleting join request:', error.message);
@@ -121,12 +206,43 @@ export async function deleteJoinRequest(groupId: string, userId: string, supabas
     }
 }
 
-export async function deleteInvite(groupId: string, memberId: string, supabaseClient: SupabaseClient<Database>): Promise<void> {
+/**
+ * Deletes an invite for a member to join a group.  Requires that the deleter is the user that created the invite.
+ * 
+ * @param groupId the group to delete the invite for
+ * @param user the member whose invite to delete
+ * @param groupMemberId the user that created the invite, the deleter
+ * @param supabaseClient the Supabase client to use for the database operations.
+ * @throws Will throw an error if the deletion fails, most likely due to permissions.
+ */
+export async function deleteSpecificInvite(group: types.Group, user: types.User, groupMemberId: types.User, supabaseClient: SupabaseClient<Database>): Promise<void> {
     const { error } = await supabaseClient
-        .from('group_invites')
+        .from('invite_request')
         .delete()
-        .eq('group_id', groupId)
-        .eq('member_id', memberId);
+        .eq('group_id', group.group_id)
+        .eq('user_to_invite', user.user_id )
+        .eq('requester', groupMemberId.user_id);
+
+    if (error) {
+        console.error('Error deleting invite:', error.message);
+        throw error;
+    }
+}
+
+/**
+ * Deletes all invite for a member to join a specific group.  Requires that the deleter is the user that was invited.
+ * 
+ * @param groupId the group to delete the invite for
+ * @param deleter the user that is deleting the invite
+ * @param supabaseClient the Supabase client to use for the database operations.
+ * @throws Will throw an error if the deletion fails, most likely due to permissions.
+ */
+export async function deleteAllInvites(group: types.Group, deleter: types.User, supabaseClient: SupabaseClient<Database>): Promise<void> {
+    const { error } = await supabaseClient
+        .from('invite_request')
+        .delete()
+        .eq('group_id', group.group_id)
+        .eq('user_to_invite', deleter.user_id);
 
     if (error) {
         console.error('Error deleting invite:', error.message);
@@ -158,11 +274,11 @@ export async function changeGroupDescription(groupId: string, newDescription: st
     }
 }
 
-export async function changeGroupProfilePicture(groupId: string, newProfilePicture: string, supabaseClient: SupabaseClient<Database>): Promise<void> {
+export async function changeGroupProfilePicture(group: types.Group, newProfilePicture: string, supabaseClient: SupabaseClient<Database>): Promise<void> {
     const { error } = await supabaseClient
         .from('groups')
         .update({ profile_picture: newProfilePicture })
-        .eq('id', groupId);
+        .eq('id', group.group_id);
 
     if (error) {
         console.error('Error changing group profile picture:', error.message);
@@ -170,11 +286,11 @@ export async function changeGroupProfilePicture(groupId: string, newProfilePictu
     }
 }
 
-export async function deleteGroupProfilePicture(groupId: string, supabaseClient: SupabaseClient<Database>): Promise<void> {
+export async function deleteGroupProfilePicture(group: types.Group, supabaseClient: SupabaseClient<Database>): Promise<void> {
     const { error } = await supabaseClient
         .from('groups')
         .update({ profile_picture: null })
-        .eq('id', groupId);
+        .eq('id', group.group_id);
 
     if (error) {
         console.error('Error deleting group profile picture:', error.message);
@@ -182,10 +298,10 @@ export async function deleteGroupProfilePicture(groupId: string, supabaseClient:
     }
 }
 
-export async function createGroupEvent(eventDetails: { title: string; description: string; date: string; groupId: string }, supabaseClient: SupabaseClient<Database>): Promise<void> {
+export async function createGroupEvent(eventDetails: { title: string; description: string; date: string; group: types.Group }, supabaseClient: SupabaseClient<Database>): Promise<void> {
     const { error } = await supabaseClient
         .from('group_events')
-        .insert(eventDetails);
+        .insert({ ...eventDetails, group_id: eventDetails.group.group_id });
 
     if (error) {
         console.error('Error creating group event:', error.message);
@@ -193,11 +309,12 @@ export async function createGroupEvent(eventDetails: { title: string; descriptio
     }
 }
 
-export async function deleteGroupEvent(eventId: string, supabaseClient: SupabaseClient<Database>): Promise<void> {
+export async function deleteGroupEvent(eventId: string, group: types.Group, supabaseClient: SupabaseClient<Database>): Promise<void> {
     const { error } = await supabaseClient
         .from('group_events')
         .delete()
-        .eq('id', eventId);
+        .eq('id', eventId)
+        .eq('group_id', group.group_id);
 
     if (error) {
         console.error('Error deleting group event:', error.message);
@@ -205,10 +322,10 @@ export async function deleteGroupEvent(eventId: string, supabaseClient: Supabase
     }
 }
 
-export async function assignGroupTodo(todoDetails: { title: string; description: string; dueDate: string; groupId: string }, supabaseClient: SupabaseClient<Database>): Promise<void> {
+export async function assignGroupTodo(todoDetails: { title: string; description: string; dueDate: string; group: types.Group }, supabaseClient: SupabaseClient<Database>): Promise<void> {
     const { error } = await supabaseClient
         .from('group_todos')
-        .insert(todoDetails);
+        .insert({ ...todoDetails, group_id: todoDetails.group.group_id });
 
     if (error) {
         console.error('Error assigning group todo:', error.message);
@@ -216,11 +333,12 @@ export async function assignGroupTodo(todoDetails: { title: string; description:
     }
 }
 
-export async function deleteGroupTodo(todoId: string, supabaseClient: SupabaseClient<Database>): Promise<void> {
+export async function deleteGroupTodo(todoId: string, group: types.Group, supabaseClient: SupabaseClient<Database>): Promise<void> {
     const { error } = await supabaseClient
         .from('group_todos')
         .delete()
-        .eq('id', todoId);
+        .eq('id', todoId)
+        .eq('group_id', group.group_id);
 
     if (error) {
         console.error('Error deleting group todo:', error.message);
@@ -228,10 +346,10 @@ export async function deleteGroupTodo(todoId: string, supabaseClient: SupabaseCl
     }
 }
 
-export async function messageGroup(groupId: string, message: string, supabaseClient: SupabaseClient<Database>): Promise<void> {
+export async function messageGroup(group: types.Group, message: string, supabaseClient: SupabaseClient<Database>): Promise<void> {
     const { error } = await supabaseClient
         .from('group_messages')
-        .insert({ group_id: groupId, message });
+        .insert({ group_id: group.group_id, message });
 
     if (error) {
         console.error('Error messaging group:', error.message);
@@ -239,11 +357,11 @@ export async function messageGroup(groupId: string, message: string, supabaseCli
     }
 }
 
-export async function getAllMessages(groupId: string, supabaseClient: SupabaseClient<Database>): Promise<any[]> {
+export async function getAllMessages(group: types.Group, supabaseClient: SupabaseClient<Database>): Promise<any[]> {
     const { data, error } = await supabaseClient
         .from('group_messages')
         .select('*')
-        .eq('group_id', groupId);
+        .eq('group_id', group.group_id);
 
     if (error) {
         console.error('Error fetching group messages:', error.message);
@@ -253,10 +371,10 @@ export async function getAllMessages(groupId: string, supabaseClient: SupabaseCl
     return data;
 }
 
-export async function postGroupMessage(groupId: string, messageDetails: { message: string; senderId: string }, supabaseClient: SupabaseClient<Database>): Promise<void> {
+export async function postGroupMessage(group: types.Group, messageDetails: { message: string; sender: types.User }, supabaseClient: SupabaseClient<Database>): Promise<void> {
     const { error } = await supabaseClient
         .from('group_messages')
-        .insert({ group_id: groupId, ...messageDetails });
+        .insert({ group_id: group.group_id, sender_id: messageDetails.sender.user_id, message: messageDetails.message });
 
     if (error) {
         console.error('Error posting group message:', error.message);
@@ -264,7 +382,7 @@ export async function postGroupMessage(groupId: string, messageDetails: { messag
     }
 }
 
-export async function getGroupProfilePagePostsAndCategories(groupId: string, supabaseClient: SupabaseClient<Database>): Promise<any[]> {
+export async function getGroupFullProfilePage(groupId: string, supabaseClient: SupabaseClient<Database>): Promise<types.GroupHomePage> {
     const { data, error } = await supabaseClient
         .from('group_profile_page')
         .select('*')
@@ -278,11 +396,26 @@ export async function getGroupProfilePagePostsAndCategories(groupId: string, sup
     return data;
 }
 
-export async function editGroupTodo(todoId: string, updatedDetails: object, supabaseClient: SupabaseClient<Database>): Promise<void> {
+export async function getGroupProfilePagePostsAndCategories(group: types.Group, supabaseClient: SupabaseClient<Database>): Promise<any[]> {
+    const { data, error } = await supabaseClient
+        .from('group_profile_page')
+        .select('*')
+        .eq('group_id', group.group_id);
+
+    if (error) {
+        console.error('Error fetching group profile page posts and categories:', error.message);
+        throw error;
+    }
+
+    return data;
+}
+
+export async function editGroupTodo(todoId: string, updatedDetails: object, group: types.Group, supabaseClient: SupabaseClient<Database>): Promise<void> {
     const { error } = await supabaseClient
         .from('group_todos')
         .update(updatedDetails)
-        .eq('id', todoId);
+        .eq('id', todoId)
+        .eq('group_id', group.group_id);
 
     if (error) {
         console.error('Error editing group todo:', error.message);
@@ -290,11 +423,12 @@ export async function editGroupTodo(todoId: string, updatedDetails: object, supa
     }
 }
 
-export async function editGroupEvent(eventId: string, updatedDetails: object, supabaseClient: SupabaseClient<Database>): Promise<void> {
+export async function editGroupEvent(eventId: string, updatedDetails: object, group: types.Group, supabaseClient: SupabaseClient<Database>): Promise<void> {
     const { error } = await supabaseClient
         .from('group_events')
         .update(updatedDetails)
-        .eq('id', eventId);
+        .eq('id', eventId)
+        .eq('group_id', group.group_id);
 
     if (error) {
         console.error('Error editing group event:', error.message);
@@ -302,11 +436,11 @@ export async function editGroupEvent(eventId: string, updatedDetails: object, su
     }
 }
 
-export async function transferOwnership(groupId: string, newOwnerId: string, supabaseClient: SupabaseClient<Database>): Promise<void> {
+export async function transferOwnership(group: types.Group, newOwner: types.User, supabaseClient: SupabaseClient<Database>): Promise<void> {
     const { error } = await supabaseClient
         .from('groups')
-        .update({ owner_id: newOwnerId })
-        .eq('id', groupId);
+        .update({ owner_id: newOwner.user_id })
+        .eq('id', group.group_id);
 
     if (error) {
         console.error('Error transferring ownership:', error.message);
@@ -314,12 +448,12 @@ export async function transferOwnership(groupId: string, newOwnerId: string, sup
     }
 }
 
-export async function changeRoleOf(groupId: string, memberId: string, newRole: string, supabaseClient: SupabaseClient<Database>): Promise<void> {
+export async function changeRoleOf(group: types.Group, member: types.User, newRole: string, supabaseClient: SupabaseClient<Database>): Promise<void> {
     const { error } = await supabaseClient
         .from('group_members')
         .update({ role: newRole })
-        .eq('group_id', groupId)
-        .eq('member_id', memberId);
+        .eq('group_id', group.group_id)
+        .eq('member_id', member.user_id);
 
     if (error) {
         console.error('Error changing role of member:', error.message);
@@ -327,12 +461,12 @@ export async function changeRoleOf(groupId: string, memberId: string, newRole: s
     }
 }
 
-export async function leaveGroup(groupId: string, userId: string, supabaseClient: SupabaseClient<Database>): Promise<void> {
+export async function leaveGroup(group: types.Group, user: types.User, supabaseClient: SupabaseClient<Database>): Promise<void> {
     const { error } = await supabaseClient
         .from('group_members')
         .delete()
-        .eq('group_id', groupId)
-        .eq('member_id', userId);
+        .eq('group_id', group.group_id)
+        .eq('member_id', user.user_id);
 
     if (error) {
         console.error('Error leaving group:', error.message);
@@ -340,11 +474,11 @@ export async function leaveGroup(groupId: string, userId: string, supabaseClient
     }
 }
 
-export async function viewGroupCalendar(groupId: string, supabaseClient: SupabaseClient<Database>): Promise<any[]> {
+export async function viewGroupCalendar(group: types.Group, supabaseClient: SupabaseClient<Database>): Promise<any[]> {
     const { data, error } = await supabaseClient
         .from('group_calendar')
         .select('*')
-        .eq('group_id', groupId);
+        .eq('group_id', group.group_id);
 
     if (error) {
         console.error('Error viewing group calendar:', error.message);

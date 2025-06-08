@@ -130,18 +130,21 @@ export type Database = {
       }
       calendar_category_tags: {
         Row: {
+          appear_on_profile: boolean
           category_name: string
           id: string
           person_who_owns_tag: string
           tag_color: string | null
         }
         Insert: {
+          appear_on_profile?: boolean
           category_name: string
           id: string
           person_who_owns_tag: string
           tag_color?: string | null
         }
         Update: {
+          appear_on_profile?: boolean
           category_name?: string
           id?: string
           person_who_owns_tag?: string
@@ -298,6 +301,42 @@ export type Database = {
           },
         ]
       }
+      group_chat_messages: {
+        Row: {
+          by_person: string
+          created_at: string
+          group_id: string
+          message: string
+        }
+        Insert: {
+          by_person: string
+          created_at?: string
+          group_id: string
+          message: string
+        }
+        Update: {
+          by_person?: string
+          created_at?: string
+          group_id?: string
+          message?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_chat_messages_by_person_fkey"
+            columns: ["by_person"]
+            isOneToOne: false
+            referencedRelation: "usersettings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_chat_messages_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: true
+            referencedRelation: "groups"
+            referencedColumns: ["group_id"]
+          },
+        ]
+      }
       group_todos_and_events_to_vts: {
         Row: {
           group_id: string
@@ -356,7 +395,7 @@ export type Database = {
           admins_un_assign_todos?: boolean
           created_at?: string | null
           group_id?: string
-          owner: string
+          owner?: string
           profile_picture?: string | null
           public_special_events: boolean
           title: string
@@ -374,7 +413,7 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "groups_owner_fkey1"
+            foreignKeyName: "groups_owner_fkey"
             columns: ["owner"]
             isOneToOne: false
             referencedRelation: "usersettings"
@@ -458,6 +497,51 @@ export type Database = {
           },
         ]
       }
+      messages: {
+        Row: {
+          content: string
+          created_at: string
+          message_id: string
+          messenger_id: string
+          receiver_deleted: boolean
+          receiver_id: string
+          sender_deleted: boolean
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          message_id?: string
+          messenger_id: string
+          receiver_deleted?: boolean
+          receiver_id: string
+          sender_deleted: boolean
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          message_id?: string
+          messenger_id?: string
+          receiver_deleted?: boolean
+          receiver_id?: string
+          sender_deleted?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_messenger_id_fkey"
+            columns: ["messenger_id"]
+            isOneToOne: true
+            referencedRelation: "usersettings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_receiver_id_fkey"
+            columns: ["receiver_id"]
+            isOneToOne: false
+            referencedRelation: "usersettings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       people_to_close_friends: {
         Row: {
           close_friend: string
@@ -533,7 +617,7 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "people-to-following_followed_id_fkey"
+            foreignKeyName: "people_to_following_followed_id_fkey"
             columns: ["followed_id"]
             isOneToOne: false
             referencedRelation: "usersettings"
@@ -669,8 +753,9 @@ export type Database = {
           created_at: string
           description: string | null
           event_id: string | null
+          highlighted_by_owner: boolean
           id: string
-          imageLink: string | null
+          imageLink: string
           inspired_by_count: number
           liked_count: number
           owner_id: string
@@ -681,8 +766,9 @@ export type Database = {
           created_at?: string
           description?: string | null
           event_id?: string | null
+          highlighted_by_owner?: boolean
           id?: string
-          imageLink?: string | null
+          imageLink: string
           inspired_by_count?: number
           liked_count?: number
           owner_id: string
@@ -693,8 +779,9 @@ export type Database = {
           created_at?: string
           description?: string | null
           event_id?: string | null
+          highlighted_by_owner?: boolean
           id?: string
-          imageLink?: string | null
+          imageLink?: string
           inspired_by_count?: number
           liked_count?: number
           owner_id?: string
@@ -792,6 +879,36 @@ export type Database = {
           },
           {
             foreignKeyName: "post_to_group_category_post_id_fkey1"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "post"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      post_to_tagged_people: {
+        Row: {
+          person_id: string
+          post_id: string
+        }
+        Insert: {
+          person_id: string
+          post_id: string
+        }
+        Update: {
+          person_id?: string
+          post_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_to_tagged_people_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "usersettings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_to_tagged_people_post_id_fkey"
             columns: ["post_id"]
             isOneToOne: false
             referencedRelation: "post"
@@ -984,44 +1101,32 @@ export type Database = {
       usersettings: {
         Row: {
           bio: string | null
-          birthday: string | null
-          clear_search_history_in: number
           email: string | null
           first_name: string | null
           id: string
           last_name: string | null
-          links: string[] | null
-          manually_approve_tags: boolean | null
           middle_name: string | null
-          public_or_private: string | null
+          public_or_private: string
           username: string | null
         }
         Insert: {
           bio?: string | null
-          birthday?: string | null
-          clear_search_history_in?: number
           email?: string | null
           first_name?: string | null
           id?: string
           last_name?: string | null
-          links?: string[] | null
-          manually_approve_tags?: boolean | null
           middle_name?: string | null
-          public_or_private?: string | null
+          public_or_private?: string
           username?: string | null
         }
         Update: {
           bio?: string | null
-          birthday?: string | null
-          clear_search_history_in?: number
           email?: string | null
           first_name?: string | null
           id?: string
           last_name?: string | null
-          links?: string[] | null
-          manually_approve_tags?: boolean | null
           middle_name?: string | null
-          public_or_private?: string | null
+          public_or_private?: string
           username?: string | null
         }
         Relationships: []

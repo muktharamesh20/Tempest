@@ -8,9 +8,50 @@ import { get } from 'http'
 import { create } from 'domain'
 import {Post, Comment} from './utils.js'
 import {getBulkPostInfoById} from './posts.js'
+import * as types from './utils.js'
 
 //allows us to use process.env to get environment variables
 dotenv.config();
+
+async function createFollowerRequest(my_id:string, follower_id: string, supabaseClient: SupabaseClient<Database>): Promise<void> {
+    const { data, error } = await supabaseClient
+        .from('follow_request')
+        .insert({ requester: my_id, followed_id: follower_id });
+
+    if (error) {
+        console.error('Error creating follower request:', error.message);
+        throw error;
+    }
+
+    console.log('Follower request created:', data);
+}
+
+async function acceptFollowerRequest(requester_id: string, my_id:string, supabaseClient: SupabaseClient<Database>): Promise<void> {
+    const { data, error } = await supabaseClient
+        .from('people_to_following')
+        .insert({ follower_id: requester_id, followed_id: my_id });
+
+    if (error) {
+        console.error('Error accepting follower request:', error.message);
+        throw error;
+    }
+
+    console.log('Follower request accepted:', data);
+}
+
+async function rejectOrRevokeFollowerRequest(requester_id: string, followed_id:string, supabaseClient: SupabaseClient<Database>): Promise<void> {
+    const { data, error } = await supabaseClient
+        .from('follow_request')
+        .delete()
+        .match({ requester: requester_id, followed_id: followed_id });
+
+    if (error) {
+        console.error('Error rejecting follower request:', error.message);
+        throw error;
+    }
+
+    console.log('Follower request rejected:', data);
+}
 
 /**
  * This function retrieves all the people that a user follows.

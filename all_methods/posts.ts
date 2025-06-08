@@ -6,7 +6,7 @@ import assert from 'assert'
 import dotenv from 'dotenv';
 import { get } from 'http'
 import { create } from 'domain'
-import {Post, Comment} from './utils.js'
+import * as types from './utils.js'
 
 
 //allows us to use process.env to get environment variables
