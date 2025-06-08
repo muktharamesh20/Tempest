@@ -19,6 +19,12 @@ exports.decodeToken = decodeToken;
 exports.signInAndGetToken = signInAndGetToken;
 exports.signOut = signOut;
 exports.useSupaBaseRefreshToken = useSupaBaseRefreshToken;
+exports.changeUsername = changeUsername;
+exports.changeFirstName = changeFirstName;
+exports.changeLastName = changeLastName;
+exports.changeMiddleName = changeMiddleName;
+exports.changePublicOrPrivate = changePublicOrPrivate;
+exports.changeBio = changeBio;
 exports.change_password = change_password;
 exports.oathSignIn = oathSignIn;
 exports.changePassword = changePassword;
@@ -174,6 +180,78 @@ function useSupaBaseRefreshToken(refreshToken, supabaseClient) {
         console.log('✅ New Access Token:', accessToken);
         console.log('🔁 New Refresh Token:', newRefreshToken);
         return [accessToken, newRefreshToken];
+    });
+}
+function changeUsername(newUsername, userId, supabaseClient) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const { data, error } = yield supabaseClient
+            .from('usersettings')
+            .update({ username: newUsername })
+            .eq('id', userId);
+        if (error) {
+            console.error('Error changing username:', error.message);
+            throw error;
+        }
+    });
+}
+function changeFirstName(name, userId, supabaseClient) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const { data, error } = yield supabaseClient
+            .from('usersettings')
+            .update({ first_name: name })
+            .eq('id', userId);
+        if (error) {
+            console.error('Error changing first name:', error.message);
+            throw error;
+        }
+    });
+}
+function changeLastName(name, userId, supabaseClient) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const { data, error } = yield supabaseClient
+            .from('usersettings')
+            .update({ last_name: name })
+            .eq('id', userId);
+        if (error) {
+            console.error('Error changing last name:', error.message);
+            throw error;
+        }
+    });
+}
+function changeMiddleName(name, userId, supabaseClient) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const { data, error } = yield supabaseClient
+            .from('usersettings')
+            .update({ middle_name: name })
+            .eq('id', userId);
+        if (error) {
+            console.error('Error changing middle name:', error.message);
+            throw error;
+        }
+    });
+}
+function changePublicOrPrivate(public_or_private, userId, supabaseClient) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const { data, error } = yield supabaseClient
+            .from('usersettings')
+            .update({ public_or_private: public_or_private })
+            .eq('id', userId);
+        if (error) {
+            console.error('Error changing public or private name:', error.message);
+            throw error;
+        }
+    });
+}
+function changeBio(newBio, userId, supabaseClient) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const { data, error } = yield supabaseClient
+            .from('usersettings')
+            .update({ bio: newBio })
+            .eq('id', userId);
+        if (error) {
+            console.error('Error changing bio:', error.message);
+            throw error;
+        }
     });
 }
 function change_password(supabaseClient, newPassword) {

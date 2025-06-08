@@ -164,6 +164,78 @@ export async function useSupaBaseRefreshToken(refreshToken: string, supabaseClie
   return [accessToken, newRefreshToken];
 }
 
+export async function changeUsername(newUsername: string, userId: string, supabaseClient: SupabaseClient<Database>): Promise<void> {
+    const { data, error } = await supabaseClient
+        .from('usersettings') 
+        .update({ username: newUsername }) 
+        .eq('id', userId); 
+
+    if (error) {
+        console.error('Error changing username:', error.message);
+        throw error;
+    }
+}
+
+export async function changeFirstName(name: string, userId: string, supabaseClient: SupabaseClient<Database>): Promise<void> {
+  const { data, error } = await supabaseClient
+      .from('usersettings') 
+      .update({ first_name: name }) 
+      .eq('id', userId); 
+
+  if (error) {
+      console.error('Error changing first name:', error.message);
+      throw error;
+  }
+}
+
+export async function changeLastName(name: string, userId: string, supabaseClient: SupabaseClient<Database>): Promise<void> {
+  const { data, error } = await supabaseClient
+      .from('usersettings') 
+      .update({ last_name: name }) 
+      .eq('id', userId); 
+
+  if (error) {
+      console.error('Error changing last name:', error.message);
+      throw error;
+  }
+}
+
+export async function changeMiddleName(name: string, userId: string, supabaseClient: SupabaseClient<Database>): Promise<void> {
+  const { data, error } = await supabaseClient
+      .from('usersettings') 
+      .update({ middle_name: name }) 
+      .eq('id', userId); 
+
+  if (error) {
+      console.error('Error changing middle name:', error.message);
+      throw error;
+  }
+}
+
+export async function changePublicOrPrivate(public_or_private: 'public' | 'private', userId: string, supabaseClient: SupabaseClient<Database>): Promise<void> {
+  const { data, error } = await supabaseClient
+      .from('usersettings') 
+      .update({ public_or_private: public_or_private }) 
+      .eq('id', userId); 
+
+  if (error) {
+      console.error('Error changing public or private name:', error.message);
+      throw error;
+  }
+}
+
+export async function changeBio(newBio: string, userId: string, supabaseClient: SupabaseClient<Database>): Promise<void> {
+  const { data, error } = await supabaseClient
+      .from('usersettings') 
+      .update({ bio: newBio }) 
+      .eq('id', userId); 
+
+  if (error) {
+      console.error('Error changing bio:', error.message);
+      throw error;
+  }
+}
+
 export async function change_password(supabaseClient: SupabaseClient<Database>, newPassword: string): Promise<void> {
     // This function is not implemented yet, but it will handle password change
     // using the Supabase client.

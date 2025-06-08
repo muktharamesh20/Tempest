@@ -5,7 +5,7 @@ import assert from 'node:assert';
 import path from 'node:path';
 import fs from 'node:fs';
 
-import {getSupabaseClient, createUser, signInAndGetToken, signOut, useSupaBaseRefreshToken, oathSignIn, deleteAccount, changePassword, verifyToken} from '../auth.js';
+import {getSupabaseClient, changeUsername, changeFirstName, changeLastName, changeMiddleName, createUser, signInAndGetToken, signOut, useSupaBaseRefreshToken, oathSignIn, deleteAccount, changePassword, verifyToken, changePublicOrPrivate, changeBio} from '../auth.js';
 //import { asyncTimer } from '../utils.js';
 import {createTestingUsers, deleteTestingUsers} from '../test.js'
 import { create } from 'node:domain';
@@ -59,6 +59,10 @@ describe('users and user settings', function () {
      *                               the categories you want show up on your home page
      * 
      */
+    it.skip('deleting all the users should work', async function () {
+        const database: SupabaseClient<Database> = await getSupabaseClient();
+        await deleteTestingUsers(database);
+    });
 
     it.skip('Testing EMAIL sign up with and without an account', async function () {
         //setup
@@ -87,11 +91,6 @@ describe('users and user settings', function () {
         await deleteAccount(database);
     });
 
-    it.skip('deleting all the users should work', async function () {
-        const database: SupabaseClient<Database> = await getSupabaseClient();
-        await deleteTestingUsers(database);
-    });
-
     it.skip('creating all the users should work', async function () {
         const database: SupabaseClient<Database> = await getSupabaseClient();
         await createTestingUsers(database);
@@ -117,6 +116,97 @@ describe('users and user settings', function () {
         assert(false, 'oathSignIn is not implemented yet');
     });
 
+    it('changing user settings should work', async function () {
+        const database: SupabaseClient<Database> = await getSupabaseClient();
+
+        //can change first name, last name, middle name, bio,
+        //public_or_private, and username
+
+        //sign in with a user that has no first_name, last_name, or middle_name
+        const info = (await signInAndGetToken('a@a.com', 'Alphabet08', database))
+        await assert.doesNotReject(changeUsername('cool_username', info[2], database));
+
+
+        //check that the username was created
+        let response = await database.from('usersettings').select('username').match({id: info[2]});
+        assert(response.data && response.data[0]?.username === 'cool_username', 'username should have been created');
+
+        //check that we can change the username
+        await assert.doesNotReject(changeUsername('cooler_username', info[2], database));
+        response = await database.from('usersettings').select('username').match({id: info[2]});
+        assert(response.data && response.data[0]?.username === 'cooler_username', 'username should have changed');
+
+        //quick logging to make sure that the assertions are working
+        if (response.data) {
+            console.log('response', response.data[0]?.username);
+        } else {
+            console.log('response data is null');
+        }
+        
+        //create a user with first_name, last_name, and middle_name
+        await assert.doesNotReject(changeFirstName('Em', info[2], database));
+        let response2 = await database.from('usersettings').select('first_name').match({id: info[2]});
+        assert(response2.data && response2.data[0]?.first_name === 'Em', 'first name should have changed');
+
+        await assert.doesNotReject(changeLastName('my', info[2], database));
+        let response3 = await database.from('usersettings').select('last_name').match({id: info[2]});
+        assert(response3.data && response3.data[0]?.last_name === 'my', 'last name should have changed');
+
+        await assert.doesNotReject(changeMiddleName('R.', info[2], database));
+        let response4 = await database.from('usersettings').select('middle_name').match({id: info[2]});
+        assert(response4.data && response4.data[0]?.middle_name === 'R.', 'last name should have changed');
+
+        //can change bio, and public_or_private
+        await database.from('usersettings').update({ public_or_private: 'notReal' }).eq('id', info[2])
+        let response_bad = await database.from('usersettings').select('public_or_private').match({id: info[2]});
+        assert(response_bad.data && (response_bad.data[0]?.public_or_private === 'public' || response_bad.data[0]?.public_or_private 
+            === 'private'), 'should not be able to set public_or_private to notReal');
+
+        await assert.doesNotReject(changePublicOrPrivate('public', info[2], database));
+        let response_public = await database.from('usersettings').select('public_or_private').match({id: info[2]});
+        assert(response_public.data && response_public.data[0]?.public_or_private === 'public', 'privacy setting should have changed');
+
+        await assert.doesNotReject(changePublicOrPrivate('private', info[2], database));
+        let response_private = await database.from('usersettings').select('public_or_private').match({id: info[2]});
+        assert(response_private.data && response_private.data[0]?.public_or_private === 'private', 'privacy setting should have changed');
+
+        await assert.doesNotReject(changeBio('bio hehe', info[2], database));
+        let response_bio = await database.from('usersettings').select('bio').match({id: info[2]});
+        assert(response_bio.data && response_bio.data[0]?.bio === 'bio hehe', 'bio should have changed');
+
+        signOut(info[0], database);
+    });
+
+    it('check security', async function () {
+        const database: SupabaseClient<Database> = await getSupabaseClient();
+
+        //supabase handles authentication with jwt-tokens, revoking them, checking if a refresh token has been used twice, etc.
+
+        //should not be able to change the id or email
+        await assert.rejects(changePassword(database, 'Beta0893'), 'changing password should not work if not signed in');
+
+        const[token, rtoken, id ] = await signInAndGetToken('c@c.com', 'Alphabet08', database);
+        database.from('usersettings').update({email: 'a@gmail.com', id: 'a966ab4c-f262-4e79-ad05-a39b589cd033'});
+        let response = await database.from('usersettings').select('email').match({id: id});
+
+        response = await database.from('usersettings').select('email').match({id: id});
+        assert(response.data && response.data[0]?.email === 'c@c.com');
+        assert(response.data.length === 1, 'should only be one user with this id');
+
+        response = await database.from('usersettings').select('email').match({id: 'a966ab4c-f262-4e79-ad05-a39b589cd033'});
+        assert(response.data && response.data.length === 0, 'id should not have changed');
+
+        //should not be able to use the same username or email for multiple accounts
+        await assert.rejects(createUser('a@a.com', 'Alphabet08', database), 'should not be able to create a user with the same email');
+
+        //should not be able to get rid of the username, first name, or last name after setting it
+        await assert.rejects(changeUsername('', id, database));
+        await assert.rejects(changeLastName('', id, database));
+        await assert.rejects(changeFirstName('', id, database));
+
+        //can change middle name to empty string
+        await assert.doesNotReject(changeMiddleName('', id, database));
+    });
 
 });
 
