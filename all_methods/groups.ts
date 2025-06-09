@@ -7,9 +7,10 @@ import dotenv from 'dotenv';
 import { get } from 'http'
 import { create } from 'domain'
 import * as types from './utils.js'
-import { NotImplementedError, getBatchUsers, createGroupTypeWithData } from './utils.js';
+import { NotImplementedError, getBatchUsers, createGroupTypeWithData, createEventTypeWithData, createMessageTypeWithData, createUserTypeWithData, createMessageTypeWithGroupData } from './utils.js';
 import { group } from 'console'
 import { DateTime } from 'neo4j-driver'
+import { createTodo } from './myCalendar'
 
 //allows us to use process.env to get environment variables
 dotenv.config();
@@ -24,7 +25,9 @@ dotenv.config();
 export async function createGroup(groupDetails: { name: string; description: types.Text; profilePicture: types.ProfilePicture | types.DefaultProfilePicture, public_special_events: boolean, title: string }, supabaseClient: SupabaseClient<Database>): Promise<types.GroupHomePage> {
     const { data, error } = await supabaseClient
         .from('groups')
-        .insert(groupDetails)
+        .insert({
+            ...groupDetails,
+        })
         .select('group_id');
 
     if (error) {
@@ -32,7 +35,7 @@ export async function createGroup(groupDetails: { name: string; description: typ
         throw error;
     }
     
-    return getGroupFullProfilePage(data[0].group_id, supabaseClient);
+    return getGroupFullProfilePage(createGroupTypeWithData(data[0]), supabaseClient);
 }
 
 /**
@@ -316,38 +319,50 @@ export async function deleteGroupProfilePicture(group: types.Group, supabaseClie
  * 
  * @param eventDetails the details of the event to create, including title, description, date, and group.
  * @param supabaseClient the Supabase client to use for the database operations.
+ * @returns the created group event.
  */
-export async function createGroupEvent(eventDetails: {title: string, description: string, location: string | null, start_time: DateTime, end_time: DateTime, is_all_day: boolean, start_date: Date, end_date: Date, repeat_period: types.RepeatPeriod, repeat_days: types.Day[], end_repeat: Date, special_event: boolean, working_on_todo: types.Todo, group: types.Group}, supabaseClient: SupabaseClient<Database>): Promise<void> {
-    const { error } = await supabaseClient
+export async function createGroupEvent(eventDetails: {title: string, description: string, location: string | null, start_time: DateTime, end_time: DateTime, is_all_day: boolean, start_date: Date, end_date: Date, repeat_period: types.RepeatPeriod, repeat_days: types.Day[], end_repeat: Date, special_event: boolean, working_on_todo: types.Todo, group: types.Group}, supabaseClient: SupabaseClient<Database>): Promise<types.Event> {
+    const { data, error } = await supabaseClient
         .from('event')
-        .insert({title: eventDetails.title,
-                description: eventDetails.description,
-                location: eventDetails.location,
-                start_time: eventDetails.start_time,
-                end_time: eventDetails.end_time,
-                is_all_day: eventDetails.is_all_day,
-                start_date: eventDetails.start_date,
-                end_date: eventDetails.end_date,
-                repeat_period: eventDetails.repeat_period,
-                repeat_days: eventDetails.repeat_days,
-                end_repeat: eventDetails.end_repeat,
-                special_event: eventDetails.special_event,
-                working_on_todo_id: eventDetails.working_on_todo.todo_id,
-                group_id: eventDetails.group.group_id
-        });
+        .insert([{
+            description: eventDetails.description,
+            end_date: eventDetails.end_date.toISOString(),
+            end_repeat: eventDetails.end_repeat ? eventDetails.end_repeat.toISOString() : null,
+            end_time: eventDetails.end_time.toString(),
+            group_id: eventDetails.group.group_id,
+            id: undefined,
+            is_all_day: eventDetails.is_all_day,
+            location: eventDetails.location,
+            owner_id: undefined,
+            repeat: eventDetails.repeat_period,
+            special_event: eventDetails.special_event,
+            start_date: eventDetails.start_date.toString(),
+            start_time: eventDetails.start_time.toString(),
+            title: eventDetails.title,
+            weekdays: eventDetails.repeat_days,
+            working_on_this_todo: eventDetails.working_on_todo.todoID
+        }]).select('*')
 
     if (error) {
         console.error('Error creating group event:', error.message);
         throw error;
     }
+
+    return createEventTypeWithData(data[0]);
 }
 
-export async function deleteGroupEvent(eventId: string, group: types.Group, supabaseClient: SupabaseClient<Database>): Promise<void> {
+/**
+ * Deletes a group event by its ID. Requires user is a member of the group and has permission to delete events.
+ * 
+ * @param event the event to delete
+ * @param supabaseClient the Supabase client to use for the database operations.
+ */
+export async function deleteGroupEventForGroup(event: types.GroupEvent, supabaseClient: SupabaseClient<Database>): Promise<void> {
     const { error } = await supabaseClient
-        .from('group_events')
+        .from('event')
         .delete()
-        .eq('id', eventId)
-        .eq('group_id', group.group_id);
+        .eq('id', event.eventID)
+        .eq('group_id', event.group.group_id);
 
     if (error) {
         console.error('Error deleting group event:', error.message);
@@ -355,15 +370,47 @@ export async function deleteGroupEvent(eventId: string, group: types.Group, supa
     }
 }
 
-export async function assignGroupTodo(todoDetails: { title: string; description: string; dueDate: string; group: types.Group }, supabaseClient: SupabaseClient<Database>): Promise<void> {
+/**
+ * Deletes a group event for the user. It will no longer show up for them on group calendars or their own calendar.  Requires user is a member 
+ * of the group.
+ * 
+ * @param event event to delete
+ * @param user the user deleting the event
+ * @param supabaseClient the Supabase client to use for the database operations.
+ */
+export async function deleteGroupEventForUser(event: types.GroupEvent, user: types.User, supabaseClient: SupabaseClient<Database>): Promise<void> {
     const { error } = await supabaseClient
-        .from('group_todos')
-        .insert({ ...todoDetails, group_id: todoDetails.group.group_id });
+        .from('people_to_deleted_group_events')
+        .insert([{event_id: event.eventID, user_id: user.user_id}]);
+
+    if (error) {
+        console.error('Error deleting group event:', error.message);
+        throw error;
+    }
+}
+
+/**
+ * The function assigns a todo to a group. Requires user is a member of the group and has permission to assign todos.
+ * 
+ * @param todoDetails the details of the todo to assign, including title, description, due date, and group.
+ * @param me the user assigning the todo
+ * @param supabaseClient the Supabase client to use for the database operations.
+ */
+export async function assignGroupTodo(me: types.User, todoDetails: {title: string, description: string, location: string | null, start_time: DateTime, end_time: DateTime, is_all_day: boolean, start_date: Date, end_date: Date, repeat_period: types.RepeatPeriod, repeat_days: types.Day[], end_repeat: Date, special_event: boolean, working_on_todo: types.Todo, group: types.Group}, supabaseClient: SupabaseClient<Database>): Promise<types.GroupTodo> {
+    const { data, error } = await supabaseClient
+        .from('todo')
+        .insert({ ...todoDetails, group_id: todoDetails.group.group_id })
+        .select('*')
+        .limit(1);
 
     if (error) {
         console.error('Error assigning group todo:', error.message);
         throw error;
     }
+
+    return createGroupTodoTypeWithData(data[0], me, todoDetails.group);
+
+    return {todo: await types.createTodoTypeWithData(data[0]), assigned_by: me, group: todoDetails.group, type: };
 }
 
 export async function deleteGroupTodo(todoId: string, group: types.Group, supabaseClient: SupabaseClient<Database>): Promise<void> {
@@ -379,10 +426,18 @@ export async function deleteGroupTodo(todoId: string, group: types.Group, supaba
     }
 }
 
-export async function messageGroup(group: types.Group, message: string, supabaseClient: SupabaseClient<Database>): Promise<void> {
+/**
+ * Sends a message to a group. Requires user is a member.
+ * 
+ * @param group the group to message
+ * @param user the user sending the message
+ * @param message the message to send to the group
+ * @param supabaseClient the Supabase client to use for the database operations.
+ */
+export async function messageGroup(group: types.Group, user: types.User, message: string, supabaseClient: SupabaseClient<Database>): Promise<void> {
     const { error } = await supabaseClient
-        .from('group_messages')
-        .insert({ group_id: group.group_id, message });
+        .from('group_chat_messages')
+        .insert({ group_id: group.group_id, message, by_person: user.user_id });
 
     if (error) {
         console.error('Error messaging group:', error.message);
@@ -390,9 +445,16 @@ export async function messageGroup(group: types.Group, message: string, supabase
     }
 }
 
-export async function getAllMessages(group: types.Group, supabaseClient: SupabaseClient<Database>): Promise<any[]> {
+/**
+ * Fetches all messages in a group. Requires user is a member.
+ * 
+ * @param group the group to fetch messages from
+ * @param supabaseClient the Supabase client to use for the database operations.
+ * @returns A list of messages in the group.
+ */
+export async function getAllGroupMessages(group: types.Group, supabaseClient: SupabaseClient<Database>): Promise<types.GroupChat> {
     const { data, error } = await supabaseClient
-        .from('group_messages')
+        .from('group_chat_messages')
         .select('*')
         .eq('group_id', group.group_id);
 
@@ -401,35 +463,19 @@ export async function getAllMessages(group: types.Group, supabaseClient: Supabas
         throw error;
     }
 
-    return data;
+    const messages = (await Promise.all(data.map((message) => createMessageTypeWithGroupData(message)))).sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+
+    return {group: group, messages: messages, members: await getGroupMembers(group, supabaseClient)};
 }
 
-export async function postGroupMessage(group: types.Group, messageDetails: { message: string; sender: types.User }, supabaseClient: SupabaseClient<Database>): Promise<void> {
-    const { error } = await supabaseClient
-        .from('group_messages')
-        .insert({ group_id: group.group_id, sender_id: messageDetails.sender.user_id, message: messageDetails.message });
-
-    if (error) {
-        console.error('Error posting group message:', error.message);
-        throw error;
-    }
-}
-
+/**
+ * Fetches a group's full profile page, including posts and categories.
+ * 
+ * @param groupId the ID of the group to fetch
+ * @param supabaseClient the Supabase client to use for the database operations.
+ * @returns A promise that resolves to the group's home page data.
+ */
 export async function getGroupFullProfilePage(group: types.Group, supabaseClient: SupabaseClient<Database>): Promise<types.GroupHomePage> {
-    const { data, error } = await supabaseClient
-        .from('group_profile_page')
-        .select('*')
-        .eq('group_id', group.group_id);
-
-    if (error) {
-        console.error('Error fetching group profile page posts and categories:', error.message);
-        throw error;
-    }
-
-    return data;
-}
-
-export async function getGroupProfilePagePostsAndCategories(group: types.Group, supabaseClient: SupabaseClient<Database>): Promise<any[]> {
     const { data, error } = await supabaseClient
         .from('group_profile_page')
         .select('*')
@@ -481,33 +527,32 @@ export async function transferOwnership(group: types.Group, newOwner: types.User
     }
 }
 
-export async function changeRoleOf(group: types.Group, member: types.User, newRole: string, supabaseClient: SupabaseClient<Database>): Promise<void> {
-    const { error } = await supabaseClient
-        .from('group_members')
+/**
+ * Returns the new role of the member after changing it.  Requires user is a member of the group and has permission to change roles.
+ * 
+ * @param group the group whose member's role you want to change
+ * @param member the member whose role you want to change
+ * @param newRole the new role to assign to the member
+ * @param supabaseClient the Supabase client to use for the database operations.
+ */
+export async function changeRoleOf(group: types.Group, member: types.User, newRole: types.Role, supabaseClient: SupabaseClient<Database>): Promise<types.User> {
+    const { data, error } = await supabaseClient
+        .from('people_to_group')
         .update({ role: newRole })
         .eq('group_id', group.group_id)
-        .eq('member_id', member.user_id);
+        .eq('person_id', member.user_id)
+        .select('usersettings!person_id (*)');
 
     if (error) {
         console.error('Error changing role of member:', error.message);
         throw error;
     }
+
+    return createUserTypeWithData(data[0].usersettings);
 }
 
-export async function leaveGroup(group: types.Group, user: types.User, supabaseClient: SupabaseClient<Database>): Promise<void> {
-    const { error } = await supabaseClient
-        .from('group_members')
-        .delete()
-        .eq('group_id', group.group_id)
-        .eq('member_id', user.user_id);
 
-    if (error) {
-        console.error('Error leaving group:', error.message);
-        throw error;
-    }
-}
-
-export async function viewGroupCalendar(group: types.Group, supabaseClient: SupabaseClient<Database>): Promise<any[]> {
+export async function viewGroupCalendar(group: types.Group, supabaseClient: SupabaseClient<Database>): Promise<types.Calendar> {
     const { data, error } = await supabaseClient
         .from('group_calendar')
         .select('*')

@@ -11,7 +11,7 @@ import * as types from './utils.js'
 //allows us to use process.env to get environment variables
 dotenv.config();
 
-export async function getMyCalendar(userId: string, supabaseClient: SupabaseClient<Database>): Promise<any[]> {
+export async function getMyCalendar(user: types.User, supabaseClient: SupabaseClient<Database>): Promise<any[]> {
     const { data, error } = await supabaseClient
         .from('calendar')
         .select('*')
@@ -25,7 +25,7 @@ export async function getMyCalendar(userId: string, supabaseClient: SupabaseClie
     return data;
 }
 
-export async function createTodo(todoDetails: { title: string; description: string; dueDate: string; userId: string }, supabaseClient: SupabaseClient<Database>): Promise<void> {
+export async function createTodo(todoDetails: { title: string; description: string; dueDate: string; user: types.User }, supabaseClient: SupabaseClient<Database>): Promise<void> {
     const { error } = await supabaseClient
         .from('todos')
         .insert(todoDetails);
@@ -36,7 +36,7 @@ export async function createTodo(todoDetails: { title: string; description: stri
     }
 }
 
-export async function createEvent(eventDetails: { title: string; description: string; date: string; userId: string }, supabaseClient: SupabaseClient<Database>): Promise<void> {
+export async function createEvent(eventDetails: { title: string; description: string; date: string; user: types.User }, supabaseClient: SupabaseClient<Database>): Promise<void> {
     const { error } = await supabaseClient
         .from('events')
         .insert(eventDetails);
@@ -47,7 +47,7 @@ export async function createEvent(eventDetails: { title: string; description: st
     }
 }
 
-export async function getKanban(userId: string, supabaseClient: SupabaseClient<Database>): Promise<any[]> {
+export async function getKanban(user: types.User, supabaseClient: SupabaseClient<Database>): Promise<any[]> {
     const { data, error } = await supabaseClient
         .from('kanban')
         .select('*')
@@ -61,7 +61,7 @@ export async function getKanban(userId: string, supabaseClient: SupabaseClient<D
     return data;
 }
 
-export async function deleteTodo(todoId: string, supabaseClient: SupabaseClient<Database>): Promise<void> {
+export async function deleteTodo(todo: types.Todo, supabaseClient: SupabaseClient<Database>): Promise<void> {
     const { error } = await supabaseClient
         .from('todos')
         .delete()
@@ -73,7 +73,7 @@ export async function deleteTodo(todoId: string, supabaseClient: SupabaseClient<
     }
 }
 
-export async function deleteEvent(eventId: string, supabaseClient: SupabaseClient<Database>): Promise<void> {
+export async function deleteEvent(event: types.Event, supabaseClient: SupabaseClient<Database>): Promise<void> {
     const { error } = await supabaseClient
         .from('events')
         .delete()
@@ -111,7 +111,7 @@ export async function getAllCategories(supabaseClient: SupabaseClient<Database>)
     return data;
 }
 
-export async function changeViewershipTagsOfTodo(todoId: string, tags: string[], supabaseClient: SupabaseClient<Database>): Promise<void> {
+export async function changeViewershipTagsOfTodo(todo: types.Todo, tags: string[], supabaseClient: SupabaseClient<Database>): Promise<void> {
     const { error } = await supabaseClient
         .from('todos')
         .update({ viewership_tags: tags })
@@ -158,7 +158,7 @@ export async function inviteToEvent(eventId: string, inviteeId: string, supabase
     }
 }
 
-export async function acceptInviteToEvent(eventId: string, userId: string, supabaseClient: SupabaseClient<Database>): Promise<void> {
+export async function acceptInviteToEvent(eventId: string, user: types.User, supabaseClient: SupabaseClient<Database>): Promise<void> {
     const { error } = await supabaseClient
         .from('event_invites')
         .update({ accepted: true })
@@ -171,7 +171,7 @@ export async function acceptInviteToEvent(eventId: string, userId: string, supab
     }
 }
 
-export async function editTodo(todoId: string, updatedDetails: object, supabaseClient: SupabaseClient<Database>): Promise<void> {
+export async function editTodo(todo: types.Todo, updatedDetails: object, supabaseClient: SupabaseClient<Database>): Promise<void> {
     const { error } = await supabaseClient
         .from('todos')
         .update(updatedDetails)

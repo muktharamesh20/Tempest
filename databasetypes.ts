@@ -81,6 +81,39 @@ export type Database = {
           },
         ]
       }
+      all_group_members_todos: {
+        Row: {
+          completed: boolean
+          person_id: string
+          todo_copied: string
+        }
+        Insert: {
+          completed?: boolean
+          person_id: string
+          todo_copied: string
+        }
+        Update: {
+          completed?: boolean
+          person_id?: string
+          todo_copied?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "all_group_members_todos_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "usersettings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "all_group_members_todos_todo_copied_fkey"
+            columns: ["todo_copied"]
+            isOneToOne: false
+            referencedRelation: "todo"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       all_todo_to_viewership_tags: {
         Row: {
           person_id: string
@@ -169,7 +202,7 @@ export type Database = {
           group_id: string | null
           id: string
           is_all_day: boolean
-          location: string
+          location: string | null
           owner_id: string | null
           repeat: string
           special_event: boolean | null
@@ -187,7 +220,7 @@ export type Database = {
           group_id?: string | null
           id?: string
           is_all_day?: boolean
-          location: string
+          location?: string | null
           owner_id?: string | null
           repeat?: string
           special_event?: boolean | null
@@ -205,7 +238,7 @@ export type Database = {
           group_id?: string | null
           id?: string
           is_all_day?: boolean
-          location?: string
+          location?: string | null
           owner_id?: string | null
           repeat?: string
           special_event?: boolean | null
@@ -714,6 +747,36 @@ export type Database = {
           },
         ]
       }
+      people_to_saved: {
+        Row: {
+          person_id: string
+          post_id: string
+        }
+        Insert: {
+          person_id: string
+          post_id: string
+        }
+        Update: {
+          person_id?: string
+          post_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "people_to_saved_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "usersettings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "people_to_saved_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "post"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       people_to_viewership_tag: {
         Row: {
           owner_id: string
@@ -955,9 +1018,8 @@ export type Database = {
       todo: {
         Row: {
           actual_time_taken: number | null
+          all_members_must_complete: boolean
           assigned_by: string
-          copy_of: string | null
-          create_seperate_todos: boolean
           datetime_completed: string | null
           deadline: string | null
           end_repeat: string | null
@@ -978,9 +1040,8 @@ export type Database = {
         }
         Insert: {
           actual_time_taken?: number | null
+          all_members_must_complete?: boolean
           assigned_by: string
-          copy_of?: string | null
-          create_seperate_todos?: boolean
           datetime_completed?: string | null
           deadline?: string | null
           end_repeat?: string | null
@@ -1001,9 +1062,8 @@ export type Database = {
         }
         Update: {
           actual_time_taken?: number | null
+          all_members_must_complete?: boolean
           assigned_by?: string
-          copy_of?: string | null
-          create_seperate_todos?: boolean
           datetime_completed?: string | null
           deadline?: string | null
           end_repeat?: string | null
@@ -1028,13 +1088,6 @@ export type Database = {
             columns: ["assigned_by"]
             isOneToOne: false
             referencedRelation: "usersettings"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "todo_copy_of_fkey"
-            columns: ["copy_of"]
-            isOneToOne: false
-            referencedRelation: "event"
             referencedColumns: ["id"]
           },
           {
@@ -1184,6 +1237,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_remove_group_member: {
+        Args: {
+          p_group_id: string
+          p_target_person_id: string
+          p_target_role: string
+        }
+        Returns: boolean
+      }
       can_view_event: {
         Args: { event_id: string }
         Returns: boolean
@@ -1208,6 +1269,14 @@ export type Database = {
         Args: { uid: string }
         Returns: string[]
       }
+      increment_inspired_by_count: {
+        Args: { p_post_id: string }
+        Returns: undefined
+      }
+      is_admin: {
+        Args: { group_id: string }
+        Returns: boolean
+      }
       is_admin_or_owner: {
         Args: { group_id: string }
         Returns: boolean
@@ -1217,6 +1286,10 @@ export type Database = {
         Returns: boolean
       }
       is_in_group: {
+        Args: { group_id: string }
+        Returns: boolean
+      }
+      is_owner: {
         Args: { group_id: string }
         Returns: boolean
       }
