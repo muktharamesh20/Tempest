@@ -213,8 +213,62 @@ export async function getViewershipTagsOfMyPost(post: types.Post, databaseClient
     return result;
 }
 
-export async function createViewershipTag(name: string, description: string, databaseClient: SupabaseClient<Database>): Promise<types.ViewershipTag> {
+export async function createViewershipTag(me: types.User, tag_name: string, color: string, users_to_add: types.User[],description: string, databaseClient: SupabaseClient<Database>): Promise<types.ViewershipTag> {
+    const { data, error } = await databaseClient
+        .from('viewership_tags')
+        .insert({ owner_id: me.user_id, tag_color: color, tag_name: tag_name })
+        .select('*')
+        .single();
 
+    if (error) {
+        console.error('Error creating viewership tag:', error.message);
+        throw error;
+    }
+    const vt = await types.createViewershipTagTypeWithData(data);
+    changeViewershipTagMembers(me, vt, users_to_add, [], databaseClient);
+
+    return vt;
+}
+
+export async function deleteViewershipTag(vt: types.ViewershipTag, databaseClient: SupabaseClient<Database>): Promise<void> {
+    const { error } = await databaseClient
+        .from('viewership_tags')
+        .delete()
+        .eq('id', vt.id);
+
+    if (error) {
+        console.error('Error deleting viewership tag:', error.message);
+        throw error;
+    }
+}
+
+export async function changeViewershipTagMembers(me: types.User, vt: types.ViewershipTag, users_to_add: types.User[], users_to_remove: types.User[], databaseClient: SupabaseClient<Database>): Promise<void> {
+    // Remove users from the viewership tag
+    if (users_to_remove.length > 0) {
+        const { error: removeError } = await databaseClient
+            .from('people_to_viewership_tag')
+            .delete()
+            .in('person_associated', users_to_remove.map(user => user.user_id))
+            .eq('vt_id', vt.id)
+            .eq('owner_id', me.user_id);
+
+        if (removeError) {
+            console.error('Error removing users from viewership tag:', removeError.message);
+            throw removeError;
+        }
+    }
+
+    // Add new users to the viewership tag
+    if (users_to_add.length > 0) {
+        const { error: addError } = await databaseClient
+            .from('people_to_viewership_tag')
+            .insert(users_to_add.map(user => ({ viewership_tag: vt.id, person_associated: user.user_id, owner_id: me.user_id })));
+
+        if (addError) {
+            console.error('Error adding users to viewership tag:', addError.message);
+            throw addError;
+        }
+    }
 }
 
 export async function getAllViewershipTags(databaseClient: SupabaseClient<Database>): Promise<types.ViewershipTag[]> {
@@ -232,7 +286,7 @@ export async function getAllViewershipTags(databaseClient: SupabaseClient<Databa
 
 
 
-export async function changeVTs(post: types.Post, newViewershipTags: types.ViewershipTag[], databaseClient: SupabaseClient<Database>): Promise<void> {
+export async function changeVTsOfPost(post: types.Post, newViewershipTags: types.ViewershipTag[], databaseClient: SupabaseClient<Database>): Promise<void> {
     const { error: deleteError } = await databaseClient
         .from('post_to_viewership_tags')
         .delete()
