@@ -7,6 +7,7 @@ import dotenv from 'dotenv';
 import { get } from 'http'
 import { create } from 'domain'
 import * as types from './utils.js'
+import { Record } from 'neo4j-driver'
 
 
 //allows us to use process.env to get environment variables
@@ -37,7 +38,7 @@ export async function unlikePost(post: types.Post, user: types.User, databaseCli
     }
 }
 
-export async function getAllLikedPosts(user: types.User, databaseClient: SupabaseClient<Database>): Promise<types.Post[]> {
+export async function getAllLikedPosts(user: types.User, databaseClient: SupabaseClient<Database>): Promise<types.Album> {
     const { data, error } = await databaseClient
         .from('people_to_liked')
         .select('post_id, post!post_id (*)')
@@ -48,7 +49,7 @@ export async function getAllLikedPosts(user: types.User, databaseClient: Supabas
         throw error;
     }
 
-    return await Promise.all(data.map(record => types.createPostTypeWithData(record.post)));
+    return {posts: await types.createPostTypeWithData(data.map(record => record.post)), album_name: 'Liked'};
 }
 
 export async function savePost(post: types.Post, user: types.User, databaseClient: SupabaseClient<Database>): Promise<void> {
@@ -75,7 +76,7 @@ export async function unSavePost(post: types.Post, user: types.User, databaseCli
     }
 }
 
-export async function getAllSavedPosts(user: types.User, databaseClient: SupabaseClient<Database>): Promise<types.Post[]> {
+export async function getAllSavedPosts(user: types.User, databaseClient: SupabaseClient<Database>): Promise<types.Album> {
     const { data, error } = await databaseClient
         .from('people_to_saved')
         .select('post_id, post!post_id (*)')
@@ -86,7 +87,7 @@ export async function getAllSavedPosts(user: types.User, databaseClient: Supabas
         throw error;
     }
 
-    return await Promise.all(data.map(record => types.createPostTypeWithData(record.post)));
+    return {posts: await types.createPostTypeWithData(data.map(record => record.post)), album_name: 'Saved'};
 }
 
 /**
@@ -110,10 +111,10 @@ export async function inspiredByPost(post: types.Post, databaseClient: SupabaseC
  * @param postDetails the details of the post to create, including title, content, and authorId
  * @param databaseClient the Supabase client to use for the database operations
  */
-export async function createPost(postDetails: { title: string; content: string; authorId: string }, databaseClient: SupabaseClient<Database>): Promise<void> {
+export async function createPost(postDetails: { description: string | null; event_id: string | null; owner_id: string; title: string; todo_id: string | null}, databaseClient: SupabaseClient<Database>): Promise<void> {
     const { error } = await databaseClient
-        .from('posts')
-        .insert(postDetails);
+        .from('post')
+        .insert({ ...postDetails, imageLink: "doesn't matter" });
 
     if (error) {
         console.error('Error creating post:', error.message);
@@ -121,9 +122,15 @@ export async function createPost(postDetails: { title: string; content: string; 
     }
 }
 
+/**
+ * Deletes a post from the database.
+ * 
+ * @param post the post to delete
+ * @param databaseClient the Supabase client to use for the database operations
+ */
 export async function deletePost(post: types.Post, databaseClient: SupabaseClient<Database>): Promise<void> {
     const { error } = await databaseClient
-        .from('posts')
+        .from('post')
         .delete()
         .eq('id', post.id);
 
@@ -213,7 +220,17 @@ export async function getViewershipTagsOfMyPost(post: types.Post, databaseClient
     return result;
 }
 
-export async function createViewershipTag(me: types.User, tag_name: string, color: string, users_to_add: types.User[],description: string, databaseClient: SupabaseClient<Database>): Promise<types.ViewershipTag> {
+/**
+ * Creates a viewership tag in the database and adds the specified users to it.
+ * 
+ * @param me the user creating the viewership tag
+ * @param tag_name the name of the viewership tag to create
+ * @param color the color of the viewership tag to create, in hex format (e.g., '#FF5733')
+ * @param users_to_add the users to add to the viewership tag
+ * @param databaseClient the database client to use for the database operations
+ * @returns the viewership tag that was created
+ */
+export async function createViewershipTag(me: types.User, tag_name: string, color: string, users_to_add: types.User[], databaseClient: SupabaseClient<Database>): Promise<types.ViewershipTag> {
     const { data, error } = await databaseClient
         .from('viewership_tags')
         .insert({ owner_id: me.user_id, tag_color: color, tag_name: tag_name })
@@ -225,11 +242,17 @@ export async function createViewershipTag(me: types.User, tag_name: string, colo
         throw error;
     }
     const vt = await types.createViewershipTagTypeWithData(data);
-    changeViewershipTagMembers(me, vt, users_to_add, [], databaseClient);
+    changeViewershipTagMembers(me, vt, users_to_add, databaseClient);
 
     return vt;
 }
 
+/**
+ * This function deletes a viewership tag from the database.
+ * 
+ * @param vt the viewership tag to delete
+ * @param databaseClient the database client to use for the database operations
+ */
 export async function deleteViewershipTag(vt: types.ViewershipTag, databaseClient: SupabaseClient<Database>): Promise<void> {
     const { error } = await databaseClient
         .from('viewership_tags')
@@ -242,35 +265,57 @@ export async function deleteViewershipTag(vt: types.ViewershipTag, databaseClien
     }
 }
 
-export async function changeViewershipTagMembers(me: types.User, vt: types.ViewershipTag, users_to_add: types.User[], users_to_remove: types.User[], databaseClient: SupabaseClient<Database>): Promise<void> {
-    // Remove users from the viewership tag
-    if (users_to_remove.length > 0) {
-        const { error: removeError } = await databaseClient
-            .from('people_to_viewership_tag')
-            .delete()
-            .in('person_associated', users_to_remove.map(user => user.user_id))
-            .eq('vt_id', vt.id)
-            .eq('owner_id', me.user_id);
+/**
+ * Changes the members of the viewership tag.
+ * 
+ * @param me the user making the changes
+ * @param vt the viewership tag to change members of
+ * @param newUsers the new list of users for the viewership tag
+ * @param databaseClient the database client to use for the database operations
+ */
+export async function changeViewershipTagMembers(
+    me: types.User,
+    vt: types.ViewershipTag,
+    newUsers: types.User[],
+    databaseClient: SupabaseClient<Database>
+): Promise<void> {
+    // Extract user IDs from the provided list
+    const newUserIds = newUsers.map(user => user.user_id);
 
-        if (removeError) {
-            console.error('Error removing users from viewership tag:', removeError.message);
-            throw removeError;
-        }
+    // Upsert the new users for the viewership tag
+    const { error: insertError } = await databaseClient
+        .from('people_to_viewership_tag')
+        .upsert(newUsers.map(user => ({
+            viewership_tag: vt.id,
+            person_associated: user.user_id,
+            owner_id: me.user_id
+        })));
+
+    if (insertError) {
+        console.error('Error inserting/updating users in viewership tag:', insertError.message);
+        throw insertError;
     }
 
-    // Add new users to the viewership tag
-    if (users_to_add.length > 0) {
-        const { error: addError } = await databaseClient
-            .from('people_to_viewership_tag')
-            .insert(users_to_add.map(user => ({ viewership_tag: vt.id, person_associated: user.user_id, owner_id: me.user_id })));
+    // Delete users that are not in the provided list
+    const { error: deleteError } = await databaseClient
+        .from('people_to_viewership_tag')
+        .delete()
+        .eq('vt_id', vt.id)
+        .eq('owner_id', me.user_id)
+        .not('person_associated', 'in', newUserIds); // Delete rows where person_associated is NOT in the list
 
-        if (addError) {
-            console.error('Error adding users to viewership tag:', addError.message);
-            throw addError;
-        }
+    if (deleteError) {
+        console.error('Error deleting users from viewership tag:', deleteError.message);
+        throw deleteError;
     }
 }
 
+/**
+ * Gets all of the user's viewership tags.
+ * 
+ * @param databaseClient the database client to use for the database operations
+ * @returns an array of viewership tags
+ */
 export async function getAllViewershipTags(databaseClient: SupabaseClient<Database>): Promise<types.ViewershipTag[]> {
     const { data, error } = await databaseClient
         .from('viewership_tags')
@@ -284,73 +329,151 @@ export async function getAllViewershipTags(databaseClient: SupabaseClient<Databa
     return await Promise.all(data.map(record => types.createViewershipTagTypeWithData(record)));
 }
 
-
-
+/**
+ * Changes the viewership tags of a post.
+ * 
+ * @param post the post to change the viewership tags of
+ * @param newViewershipTags the new viewership tags to set for the post
+ * @param databaseClient the database client to use for the database operations
+ */
 export async function changeVTsOfPost(post: types.Post, newViewershipTags: types.ViewershipTag[], databaseClient: SupabaseClient<Database>): Promise<void> {
+    const viewershipTagIds = newViewershipTags.map(tag => tag.id);
+
+    const { error: insertError } = await databaseClient
+        .from('post_to_viewership_tags')
+        .upsert(newViewershipTags.map(tag => ({ post_id: post.id, vt_id: tag.id })));
+
+    if (insertError) {
+        console.error('Error inserting/updating viewership tags:', insertError.message);
+        throw insertError;
+    }
+
     const { error: deleteError } = await databaseClient
         .from('post_to_viewership_tags')
         .delete()
-        .eq('post_id', post.id);
+        .eq('post_id', post.id)
+        .not('vt_id', 'in', viewershipTagIds); 
 
-    const { data, error: insertError } = await databaseClient
-        .from('post_to_viewership_tags')
-        .insert(newViewershipTags.map(tag => ({ post_id: post.id, vt_id: tag.id })));
+    if (deleteError) {
+        console.error('Error deleting viewership tags:', deleteError.message);
+        throw deleteError;
+    }
+}
+
+/**
+ * Changes the categories of a post.
+ * 
+ * @param post the post to change the categories of
+ * @param categories the new categories to set for the post
+ * @param databaseClient the database client to use for the database operations
+ */
+export async function changeCategoriesOfPost(post: types.Post, categories: types.Category[], databaseClient: SupabaseClient<Database>): Promise<void> {
+    const { error: insertError } = await databaseClient
+        .from('post_to_category')
+        .upsert(categories.map(category => ({ category_id: category.id, post_id: post.id })));
 
     if (insertError) {
-        console.error('Error changing viewership tags:', insertError.message);
+        console.error('Error changing categories:', insertError.message);
         throw insertError;
     }
-}
 
-export async function changeCategoriesOfPost(post: types.Post, categories: string[], databaseClient: SupabaseClient<Database>): Promise<void> {
-    const { error } = await databaseClient
-        .from('posts')
-        .update({ categories })
-        .eq('id', post.id);
+    const { error: deleteError } = await databaseClient
+        .from('post_to_category')
+        .delete()
+        .eq('post_id', post.id)
+        .not('category_id','in', categories.map(category => category.id));
 
-    if (error) {
-        console.error('Error changing categories:', error.message);
-        throw error;
+    if (deleteError) {
+        console.error('Error changing categories:', deleteError.message);
+        throw deleteError;
     }
 }
 
-export async function changeCategoriesOfTodo(todo: types.Todo, categories: string[], databaseClient: SupabaseClient<Database>): Promise<void> {
-    const { error } = await databaseClient
-        .from('todos')
-        .update({ categories })
-        .eq('id', todo.id);
+/**
+ * Changes the categories of a todo.
+ * 
+ * @param todo the todo to change the categories of
+ * @param categories the new categories to set for the todo
+ * @param databaseClient the database client to use for the database operations
+ */
+export async function changeCategoriesOfTodo(todo: types.Todo, categories: types.Category[], databaseClient: SupabaseClient<Database>): Promise<void> {
+    const { error: insertError } = await databaseClient
+        .from('todo_to_category')
+        .upsert(categories.map(category => ({ category_id: category.id, todo_id: todo.todoID })));
 
-    if (error) {
-        console.error('Error changing categories:', error.message);
-        throw error;
+    if (insertError) {
+        console.error('Error changing categories:', insertError.message);
+        throw insertError;
+    }
+
+    const { error: deleteError } = await databaseClient
+        .from('todo_to_category')
+        .delete()
+        .eq('todo_id', todo.todoID)
+        .not('category_id','in', categories.map(category => category.id));
+
+    if (deleteError) {
+        console.error('Error changing categories:', deleteError.message);
+        throw deleteError;
     }
 }
 
+/**
+ * Changes the categories displayed in a user's profile.
+ * 
+ * @param user the user whose profile categories are being changed
+ * @param categories the categories to display in the user's profile
+ * @param databaseClient the database client to use for the database operations
+ */
 export async function changeDisplayedCategoriesInProfile(user: types.User, categories: types.Category[], databaseClient: SupabaseClient<Database>): Promise<void> {
-    const { error } = await databaseClient
-        .from('usersettings')
-        .update({ displayed_categories: categories })
-        .eq('id', user.user_id);
+    const { error: insertError } = await databaseClient
+        .from('calendar_category_tags')
+        .update({ appear_on_profile: true })
+        .eq('id', user.user_id)
+        .in ('category_id', categories.map(category => category.id));
 
-    if (error) {
-        console.error('Error changing displayed categories in profile:', error.message);
-        throw error;
+    if (insertError) {
+        console.error('Error changing displayed categories in profile:', insertError.message);
+        throw insertError;
+    }
+
+    const { error: deletError } = await databaseClient
+        .from('calendar_category_tags')
+        .update({ appear_on_profile: false })
+        .eq('id', user.user_id)
+        .not('category_id', 'in', categories.map(category => category.id));
+
+    if (deletError) {
+        console.error('Error changing displayed categories in profile:', deletError.message);
+        throw deletError;
     }
 } 
 
-export async function getFeed(user: types.User, databaseClient: SupabaseClient<Database>): Promise<any[]> {
+/**
+ * Returns 15 posts the user has not viewed yet.  Will return posts that the user has already viewed if there are not enough new posts.
+ * 
+ * @param user the user for whom the feed is being requested
+ * @param viewed_posts the posts that have been viewed in the last feed
+ * @param databaseClient the database client to use for the database operations
+ */
+export async function getFeed(user: types.User, viewed_posts: types.Post[], databaseClient: SupabaseClient<Database>): Promise<types.Feed> {
+    //when a new feed is requested, mark anything viewed from the last feed as viewed
+    const { error: markViewedError } = await databaseClient
+        .from('people_to_viewed')
+        .upsert(viewed_posts.map(post => ({ post_id: post.id, person_id: user.user_id })));
+
     const { data, error } = await databaseClient
-        .rpc('get_feed', { user_id: user.user_id });
+    .rpc('get_feed');
 
     if (error) {
         console.error('Error fetching feed:', error.message);
         throw error;
     }
 
-    return data;
+    return {posts: await types.createPostTypeWithData(data)};
 }
 
-export async function addCommentToPost(post: types.Post, commentDetails: { content: string; authorId: string }, databaseClient: SupabaseClient<Database>): Promise<void> {
+export async function addCommentToPost(post: types.Post, commentDetails: { content: string; authorId: string }, databaseClient: SupabaseClient<Database>): Promise<types.Post> {
     const { error } = await databaseClient
         .from('comments')
         .insert({ post_id: post.id, ...commentDetails });

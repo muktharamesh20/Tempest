@@ -777,6 +777,36 @@ export type Database = {
           },
         ]
       }
+      people_to_viewed: {
+        Row: {
+          person_id: string
+          post_id: string
+        }
+        Insert: {
+          person_id: string
+          post_id: string
+        }
+        Update: {
+          person_id?: string
+          post_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "people_to_viewed_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "usersettings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "people_to_viewed_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "post"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       people_to_viewership_tag: {
         Row: {
           owner_id: string
@@ -1265,6 +1295,22 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      get_feed: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: string
+          created_at: string
+          description: string
+          todo_id: string
+          event_id: string
+          owner_id: string
+          inspired_by_count: number
+          liked_count: number
+          title: string
+          imageLink: string
+          highlighted_by_owner: boolean
+        }[]
+      }
       get_group_ids_for_user: {
         Args: { uid: string }
         Returns: string[]
@@ -1279,6 +1325,10 @@ export type Database = {
       }
       is_admin_or_owner: {
         Args: { group_id: string }
+        Returns: boolean
+      }
+      is_archived: {
+        Args: { post_id: string }
         Returns: boolean
       }
       is_following: {

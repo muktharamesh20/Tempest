@@ -9,7 +9,8 @@ export type Calendar = {forNow:null}
 export type Group = {forNow: null, group_id: GroupId, onlyAdminsInvite: boolean, onlyAdminsAssignTodos: boolean}
 export type UserHomePage = {id: CategoryId, CategoryName: string, orderNum: number, posts: Post[], tags: Post[], followers: UserList, following: UserList, profile: User, mutual_groups: GroupList};
 export type GroupHomePage = {CategoryName: string, orderNum: number, posts: Post[], tags: Post[], members: UserList, profile: User};
-export type Feed = {forNow: null}
+export type Feed = {posts: Post[]}
+export type Album = {posts: Post[], album_name: 'Liked' | 'Saved'}
 export type Message = {id: string, content: Text, createdAt: Date, senderId: string}
 export type GroupChat = {group: Group, members: GroupUserList, messages: Message[]}; //in order
 export type FrinedChat = {otherUser: User, messages: Message[]};
@@ -43,7 +44,7 @@ export type CategoryId = string;
 export type Role = 'admin' | 'owner' | 'general';
 export type RepeatPeriod = 'NONE' | 'Weekly' | 'Monthly' | 'BiWeekly' | 'Daily' | 'Yearly'; 
 export type Day = 'MO' | 'TU' | 'WE' | 'TH' | 'FR' | 'SA' | 'SU';
-export type ViewershipTag = {name: string, id:string, fornow: ull};
+export type ViewershipTag = {name: string, id:string, fornow: null};
 
 export async function asyncTimer(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -142,7 +143,7 @@ export async function createMessageTypeWithGroupData(messageDetails: { by_person
 }
 
 //created
-export async function createPostTypeWithData(postDetails: { created_at: string; description: string | null; event_id: string | null; highlighted_by_owner: boolean; id: string; imageLink: string; inspired_by_count: number; liked_count: number; owner_id: string; title: string; todo_id: string | null; }): Promise<Post> {
+export async function createPostTypeWithData(postDetails: { created_at: string; description: string | null; event_id: string | null; highlighted_by_owner: boolean; id: string; imageLink: string; inspired_by_count: number; liked_count: number; owner_id: string; title: string; todo_id: string | null; }[]): Promise<Post[]> {
     throw new NotImplementedError('createPostTypeWithData');
 }
 

@@ -22,11 +22,14 @@ dotenv.config();
  * @param supabaseClient 
  * @return A promise that resolves to the created group's home page.
  */
-export async function createGroup(groupDetails: { name: string; description: types.Text; profilePicture: types.ProfilePicture | types.DefaultProfilePicture, public_special_events: boolean, title: string }, supabaseClient: SupabaseClient<Database>): Promise<types.GroupHomePage> {
+export async function createGroup(profile_picture: types.Image,groupDetails: { name: string; description: types.Text, public_special_events: boolean, title: string }, supabaseClient: SupabaseClient<Database>): Promise<types.GroupHomePage> {
     const { data, error } = await supabaseClient
         .from('groups')
         .insert({
-            ...groupDetails,
+            profile_picture: '', // Added missing property
+            description: groupDetails.description,
+            public_special_events: groupDetails.public_special_events,
+            title: groupDetails.title
         })
         .select('group_id');
 

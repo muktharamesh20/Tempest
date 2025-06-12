@@ -232,11 +232,10 @@ export async function deleteMessageForMe(message: types.Message, supabaseClient:
 
 
 export async function getTaggedPostsFrom(userId: string, supabaseClient: SupabaseClient<Database>): Promise<Post[]> {
-    throw new Error('Function not implemented.'); // This function is not fully implemented yet, so we throw an error for now.
     const { data, error } = await supabaseClient
-        .from('post_tags')
-        .select('post_id')
-        .eq('user_id', userId);
+        .from('post_to_tagged_people')
+        .select('post_id, posts!post_id (*)')
+        .eq('person_id', userId);
 
     if (error) {
         console.error('Error fetching tagged posts:', error.message);

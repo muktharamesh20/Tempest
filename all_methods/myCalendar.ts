@@ -11,7 +11,7 @@ import * as types from './utils.js'
 //allows us to use process.env to get environment variables
 dotenv.config();
 
-export async function getMyCalendar(user: types.User, supabaseClient: SupabaseClient<Database>): Promise<any[]> {
+export async function getMyCalendar(user: types.User, supabaseClient: SupabaseClient<Database>, from: Date, to: Date): Promise<any[]> {
     const { data, error } = await supabaseClient
         .from('calendar')
         .select('*')
